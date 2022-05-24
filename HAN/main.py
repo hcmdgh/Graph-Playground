@@ -1,0 +1,91 @@
+from util import *
+from dataset.acm import * 
+from .config import * 
+from .model.han import * 
+
+
+def main():
+    set_device(DEVICE)
+    
+    init_log('./log.log')
+    
+    acm_dataset = load_acm_dataset()
+    hg = acm_dataset.to_dgl() 
+    hg = to_device(hg)
+    
+    feat = to_device(acm_dataset.node_prop_dict['feat']['paper'])
+    train_mask = acm_dataset.node_prop_dict['train_mask']['paper'].cpu().numpy()
+    val_mask = acm_dataset.node_prop_dict['val_mask']['paper'].cpu().numpy()
+    test_mask = acm_dataset.node_prop_dict['test_mask']['paper'].cpu().numpy()
+    label = to_device(acm_dataset.node_prop_dict['label']['paper'])
+    label_np = label.cpu().numpy() 
+    
+    model = HAN(
+        hg = hg,
+        metapaths = METAPATHS,
+        in_dim = feat.shape[-1],
+        hidden_dim = HIDDEN_DIM,
+        out_dim = acm_dataset.num_classes,
+        num_layers = NUM_LAYERS,
+        layer_num_heads = LAYER_NUM_HEADS,
+        dropout_ratio = DROPOUT_RATIO,
+    )
+    model = to_device(model)
+    
+    optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+    
+    for epoch in itertools.count(1):
+        def train_epoch():
+            model.train()
+            
+            logits = model(feat)
+            
+            loss = F.cross_entropy(input=logits[train_mask], target=label[train_mask])
+            
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step() 
+            
+            logging.info(f"epoch: {epoch}, train_loss: {float(loss):.4f}")  
+            
+        def val():
+            model.eval()
+            
+            with torch.no_grad(): 
+                logits = model(feat) 
+                
+            y_true = label_np[val_mask]
+            
+            y_pred = np.argmax(logits.cpu().numpy()[val_mask], axis=-1) 
+            
+            acc = calc_acc(y_true=y_true, y_pred=y_pred)
+            f1_micro = calc_f1_micro(y_true=y_true, y_pred=y_pred)
+            f1_macro = calc_f1_macro(y_true=y_true, y_pred=y_pred)
+
+            logging.info(f"epoch: {epoch}, val_acc: {acc:.4f}, val_f1_micro: {f1_micro:.4f}, val_f1_macro: {f1_macro:.4f}")  
+            
+        def test():
+            model.eval()
+            
+            with torch.no_grad(): 
+                logits = model(feat) 
+                
+            y_true = label_np[test_mask]
+            
+            y_pred = np.argmax(logits.cpu().numpy()[test_mask], axis=-1) 
+            
+            acc = calc_acc(y_true=y_true, y_pred=y_pred)
+            f1_micro = calc_f1_micro(y_true=y_true, y_pred=y_pred)
+            f1_macro = calc_f1_macro(y_true=y_true, y_pred=y_pred)
+
+            logging.info(f"epoch: {epoch}, test_acc: {acc:.4f}, test_f1_micro: {f1_micro:.4f}, test_f1_macro: {f1_macro:.4f}")  
+            
+        train_epoch()  
+        
+        if epoch % 10 == 0:
+            val()
+            test() 
+    
+    
+if __name__ == '__main__':
+    main() 

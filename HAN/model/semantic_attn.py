@@ -1,0 +1,35 @@
+from util import * 
+
+
+class SemanticAttention(nn.Module):
+    def __init__(self,
+                 in_dim: int,
+                 hidden_dim: int = 128):
+        super().__init__()
+        
+        self.project = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, 1, bias=False)
+        )
+        
+    def forward(self, inp: FloatTensor) -> FloatTensor:
+        # inp: float[num_nodes x num_metapaths x in_dim]
+        
+        # weight: [1 x num_metapaths x 1]
+        weight = torch.mean(
+            self.project(inp),  # [num_nodes x num_metapaths x 1]
+            dim=0,
+            keepdim=True,
+        ) 
+        
+        # weight: [1 x num_metapaths x 1]
+        weight = torch.softmax(weight, dim=1) 
+        
+        # out: [num_nodes x in_dim]
+        out = torch.sum(
+            weight * inp,  # [num_nodes x num_metapaths x in_dim]
+            dim=1,
+        ) 
+        
+        return out 

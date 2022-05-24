@@ -1,0 +1,12 @@
+__pycache__
+*.bak
+*.log 
+*.bin
+*.pt
+*.pkl
+*.zip
+*.tar.*
+*.7z
+*test*
+.DS_Store
+temp
