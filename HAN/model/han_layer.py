@@ -23,13 +23,13 @@ class HANLayer(nn.Module):
         
         self.gat_layer_dict = nn.ModuleDict({
             str(metapath): dglnn.GATConv(
-                in_feats=in_dim,
-                out_feats=out_dim,
-                num_heads=layer_num_heads,
-                feat_drop=dropout_ratio,
-                attn_drop=dropout_ratio,
-                activation=F.elu,
-                allow_zero_in_degree=True,
+                in_feats = in_dim,
+                out_feats = out_dim,
+                num_heads = layer_num_heads,
+                feat_drop = dropout_ratio,
+                attn_drop = dropout_ratio,
+                activation = F.elu,
+                allow_zero_in_degree = True,
             )
             for metapath in metapaths
         })

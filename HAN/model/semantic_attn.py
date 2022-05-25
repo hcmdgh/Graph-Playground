@@ -1,4 +1,5 @@
 from util import * 
+from ..config import * 
 
 
 class SemanticAttention(nn.Module):
@@ -24,7 +25,11 @@ class SemanticAttention(nn.Module):
         ) 
         
         # weight: [1 x num_metapaths x 1]
-        weight = torch.softmax(weight, dim=1) 
+        if not REMOVE_SOFTMAX_IN_SEMANTIC_ATTN:
+            weight = torch.softmax(weight, dim=1) 
+            
+        if REMOVE_SEMANTIC_ATTN:
+            weight = to_device(torch.ones_like(weight))
         
         # out: [num_nodes x in_dim]
         out = torch.sum(
