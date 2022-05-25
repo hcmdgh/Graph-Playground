@@ -6,7 +6,15 @@
             "type": "python",
             "request": "launch",
             "module": "HAN.main",
-            "justMyCode": true,
+            "justMyCode": false,
+        },
+
+        {
+            "name": "GAT - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GAT.main",
+            "justMyCode": false,
         },
 
         {
@@ -15,6 +23,14 @@
             "request": "launch",
             "program": "test.py",
             "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+
+        {
+            "name": "test - ogbn_arxiv",
+            "type": "python",
+            "request": "launch",
+            "module": "dataset.ogbn_arxiv",
             "justMyCode": true,
         },
     ]

@@ -1,6 +1,6 @@
 from util import *
 
-DATASET_PATH = './dataset/bin/acm.pt'
+DATASET_PATH = './dataset/bin/ACM/acm.pt'
 
 
 def load_acm_dataset() -> HeteroGraph:

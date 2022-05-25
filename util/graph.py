@@ -64,3 +64,44 @@ class HeteroGraph:
             rev_edge_index_dict[(edge_type[2], edge_type[1] + '_rev', edge_type[0])] = (edge_index[1], edge_index[0]) 
 
         self.edge_index_dict.update(rev_edge_index_dict)
+
+
+@dataclass 
+class HomoGraph:
+    num_nodes: int 
+    edge_index: tuple[IntTensor, IntTensor]
+    node_prop_dict: dict[str, Tensor]
+    edge_prop_dict: dict[tuple[str, str, str], Tensor]
+    num_classes: Optional[int] = None 
+    
+    def to_dgl(self,
+               with_prop: bool = False) -> dgl.DGLGraph:
+        g = dgl.graph(data=self.edge_index,
+                       num_nodes=self.num_nodes)
+        
+        if with_prop:
+            for prop_name, prop_val in self.node_prop_dict.items():
+                g.ndata[prop_name] = prop_val 
+                    
+            for prop_name, prop_val in self.edge_prop_dict.items():
+                g.edata[prop_name] = prop_val 
+
+        return g 
+    
+    @classmethod
+    def from_dgl(cls, g: dgl.DGLGraph) -> 'HomoGraph':
+        return cls(
+            num_nodes = g.num_nodes(),
+            edge_index = tuple(g.edges()),
+            node_prop_dict = dict(g.ndata),
+            edge_prop_dict = dict(g.edata),
+        )
+
+    def save_to_file(self, file_path: str):
+        torch.save(dataclasses.asdict(self), file_path)
+        
+    @classmethod
+    def load_from_file(cls, file_path: str) -> 'HomoGraph':
+        dict_ = torch.load(file_path)
+        
+        return cls(**dict_)
