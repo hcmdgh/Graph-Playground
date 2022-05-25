@@ -67,7 +67,6 @@ def main():
 
             logging.info(f"epoch: {epoch}, train_loss: {float(loss):.4f}, val_loss: {float(val_loss):.4f}")  
             
-            
         def val():
             model.eval()
             

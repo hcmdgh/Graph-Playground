@@ -14,20 +14,20 @@ class GATConv(nn.Module):
                  bias: bool = True):
         super().__init__()
         
+        self.num_heads = num_heads 
         self.in_dim = in_dim
         self.out_dim = out_dim 
-        self.num_heads = num_heads
         self.allow_zero_in_degree = allow_zero_in_degree
+        
+        self.fc = nn.Linear(in_dim, out_dim * num_heads, bias=False)
+        
+        self.attn_l = Parameter(torch.zeros(1, num_heads, out_dim))
+        self.attn_r = Parameter(torch.zeros(1, num_heads, out_dim))
 
-        self.W_fc = nn.Linear(in_dim, out_dim * num_heads, bias=False)
-        
-        self.alpha_l = Parameter(torch.zeros(num_heads, out_dim))
-        self.alpha_r = Parameter(torch.zeros(num_heads, out_dim))
-        
-        self.leaky_relu = nn.LeakyReLU(negative_slope)
-        
         self.feat_dropout = nn.Dropout(dropout_ratio)
         self.attn_dropout = nn.Dropout(dropout_ratio)
+
+        self.leaky_relu = nn.LeakyReLU(negative_slope)
         
         if bias:
             self.bias = Parameter(torch.zeros(1, num_heads, out_dim))
@@ -41,7 +41,7 @@ class GATConv(nn.Module):
                 self.residual_fc = nn.Identity() 
         else:
             self.residual_fc = None 
-        
+            
         self.activation = activation 
         
         self.reset_parameters() 
@@ -49,10 +49,10 @@ class GATConv(nn.Module):
     def reset_parameters(self):
         gain = nn.init.calculate_gain('relu')
         
-        nn.init.xavier_normal_(self.W_fc.weight, gain=gain)
+        nn.init.xavier_normal_(self.fc.weight, gain=gain)
 
-        nn.init.xavier_normal_(self.alpha_l, gain=gain)
-        nn.init.xavier_normal_(self.alpha_r, gain=gain)
+        nn.init.xavier_normal_(self.attn_l, gain=gain)
+        nn.init.xavier_normal_(self.attn_r, gain=gain)
         
         if self.bias is not None:
             nn.init.constant_(self.bias, 0.)
@@ -68,54 +68,71 @@ class GATConv(nn.Module):
         with g.local_scope():
             if not self.allow_zero_in_degree:
                 assert not (g.in_degrees() == 0).any()
-                
+
             feat_drop = self.feat_dropout(feat)
             
-            # feat_fc: [num_nodes x (num_heads * out_dim)]
-            feat_fc = self.W_fc(feat_drop)
+            # -> [num_nodes x (num_heads * out_dim)] 
+            feat_fc = self.fc(feat_drop)
             
-            # feat_fc: [num_nodes x num_heads x out_dim]
+            # -> [num_nodes x num_heads x out_dim]
             feat_fc = feat_fc.view(-1, self.num_heads, self.out_dim)
-
-            # attn_l: [num_nodes x num_heads x 1], alpha_l: [num_heads x out_dim]
-            # attn_r: [num_nodes x num_heads x 1], alpha_r: [num_heads x out_dim]
-            attn_l = torch.einsum('bhd,hd->bh', feat_fc, self.alpha_l).unsqueeze(dim=-1)
-            attn_r = torch.einsum('bhd,hd->bh', feat_fc, self.alpha_r).unsqueeze(dim=-1)
             
-            g.ndata['_feat_fc'] = feat_fc
-            g.ndata['_attn_l'] = attn_l 
-            g.ndata['_attn_r'] = attn_r
-            
-            g.apply_edges(dglfn.u_add_v('_attn_l', '_attn_r', '_attn'))
-            
-            # edge_attn: [num_edges x num_heads x 1]
-            edge_attn = g.edata.pop('_attn') 
-            edge_attn = self.leaky_relu(edge_attn)
-            edge_attn = dglF.edge_softmax(g, edge_attn)
-            edge_attn = self.attn_dropout(edge_attn)
-            
-            g.edata['_attn'] = edge_attn 
-            
-            g.update_all(
-                message_func = dglfn.u_mul_e('_feat_fc', '_attn', '_'),
-                reduce_func = dglfn.sum('_', '_out_feat'),
+            # el: [num_nodes x num_heads x 1]
+            el = torch.unsqueeze(
+                # [num_nodes x num_heads]
+                torch.sum(
+                    # self.attn_l: [1 x num_heads x out_dim]
+                    feat_fc * self.attn_l,  
+                    dim=-1, 
+                ),
+                dim=-1, 
             )
             
-            # out_feat: [num_nodes x num_heads x out_dim]
-            out_feat = g.ndata.pop('_out_feat')
+            # er: [num_nodes x num_heads x 1]
+            er = torch.unsqueeze(
+                torch.sum(
+                    feat_fc * self.attn_r,  
+                    dim=-1, 
+                ),
+                dim=-1, 
+            )
+            
+            g.ndata['ft'] = feat_fc 
+            g.ndata['el'] = el 
+            g.ndata['er'] = er 
+            
+            # e: [num_edges x num_heads x 1]
+            g.apply_edges(dglfn.u_add_v('el', 'er', 'e'))
+
+            # e: [num_edges x num_heads x 1]
+            e = self.leaky_relu(g.edata.pop('e'))
+            
+            # a: [num_edges x num_heads x 1]
+            g.edata['a'] = self.attn_dropout(
+                dglF.edge_softmax(g, e)
+            )
+            
+            g.update_all(
+                message_func = dglfn.u_mul_e('ft', 'a', 'm'),
+                reduce_func = dglfn.sum('m', 'ft'),
+            )
+            
+            # out: [num_nodes x num_heads x out_dim]
+            out = g.ndata.pop('ft')
             
             if self.residual_fc is not None:
                 # feat_drop: [num_nodes x in_dim]
                 # residual_val: [num_nodes x num_heads x out_dim]
                 residual_val = self.residual_fc(feat_drop).view(-1, self.num_heads, self.out_dim)
 
-                out_feat = out_feat + residual_val 
+                out = out + residual_val 
                 
             if self.bias is not None:
                 # self.bias: [1 x num_heads x out_dim] 
-                out_feat = out_feat + self.bias 
-            
-            if self.activation is not None:
-                out_feat = self.activation(out_feat)
+                out = out + self.bias 
                 
-            return out_feat 
+            if self.activation is not None:
+                out = self.activation(out)
+                
+            # out: [num_nodes x num_heads x out_dim]
+            return out 
