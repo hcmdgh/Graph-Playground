@@ -18,6 +18,14 @@
         },
 
         {
+            "name": "ACDNE - main",
+            "type": "python",
+            "request": "launch",
+            "module": "ACDNE.main",
+            "justMyCode": true,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",
