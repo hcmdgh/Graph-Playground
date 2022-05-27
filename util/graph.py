@@ -74,6 +74,10 @@ class HomoGraph:
     edge_prop_dict: dict[tuple[str, str, str], Tensor]
     num_classes: Optional[int] = None 
     
+    @property
+    def num_edges(self) -> int:
+        return len(self.edge_index[0])
+    
     def to_dgl(self,
                with_prop: bool = False) -> dgl.DGLGraph:
         g = dgl.graph(data=self.edge_index,

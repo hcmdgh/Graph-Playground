@@ -49,5 +49,13 @@
             "module": "dataset.ogbn_arxiv",
             "justMyCode": true,
         },
+
+        {
+            "name": "test - AdaGCN_dataset",
+            "type": "python",
+            "request": "launch",
+            "module": "dataset.AdaGCN_dataset",
+            "justMyCode": true,
+        },
     ]
 }
