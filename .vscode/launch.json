@@ -26,6 +26,14 @@
         },
 
         {
+            "name": "GraphSAGE - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GraphSAGE.main",
+            "justMyCode": true,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",
