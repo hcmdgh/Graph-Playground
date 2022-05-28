@@ -10,3 +10,4 @@ __pycache__
 *test*
 .DS_Store
 temp
+output 
