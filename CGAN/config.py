@@ -1,0 +1,14 @@
+DEVICE = 'cuda:3'
+
+NUM_EPOCHS = 200 
+
+BATCH_SIZE = 64 
+
+LR = 0.0002 
+
+ADAM_B1 = 0.5
+ADAM_B2 = 0.999 
+
+LATENT_DIM = 100 
+
+NUM_CLASSES = 10 

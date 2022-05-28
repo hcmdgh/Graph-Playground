@@ -42,6 +42,14 @@
         },
 
         {
+            "name": "CGAN - main",
+            "type": "python",
+            "request": "launch",
+            "module": "CGAN.main",
+            "justMyCode": true,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",
