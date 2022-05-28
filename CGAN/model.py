@@ -39,10 +39,10 @@ class Generator(nn.Module):
         # noise: float[batch_size x latent_dim]
         # labels: int[batch_size]
         
-        # label_emb: [batch_size x num_classes]
+        # label_emb: [batch_size x label_emb_dim]
         label_emb = self.label_emb(labels)
         
-        # inp_G: [batch_size x (latent_dim + num_classes)]
+        # inp_G: [batch_size x (latent_dim + label_emb_dim)]
         inp_G = torch.cat([label_emb, noise], dim=-1)
 
         # img_flat: [batch_size x img_size]
@@ -86,10 +86,10 @@ class Discriminator(nn.Module):
         # img_flat: [batch_size x img_size] 
         img_flat = img_batch.view(img_batch.shape[0], -1)
         
-        # label_emb: [batch_size x num_classes] 
+        # label_emb: [batch_size x label_emb_dim] 
         label_emb = self.label_emb(labels)
         
-        # inp_D: [batch_size x (img_size + num_classes)]
+        # inp_D: [batch_size x (img_size + label_emb_dim)]
         inp_D = torch.cat([img_flat, label_emb], dim=-1)
 
         # logits: [batch_size]
