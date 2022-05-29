@@ -1,0 +1,23 @@
+DEVICE = 'cuda:3'
+
+SRC_DATASET = 'citationv1'
+TGT_DATASET = 'dblpv7'
+
+EARLY_STOPPING_EPOCH = 100 
+
+# [BEGIN] 消融/对比实验
+USE_GAN = True 
+# [END]
+
+# [BEGIN] GNN
+GNN_EMB_DIM = 64 
+
+GNN_NUM_LAYERS = 2 
+
+GNN_DROPOUT = 0.0
+# [END] 
+
+LR = 0.0005
+
+ADAM_B1 = 0.5
+ADAM_B2 = 0.999 

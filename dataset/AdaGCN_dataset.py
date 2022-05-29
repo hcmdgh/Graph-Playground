@@ -17,8 +17,8 @@ def _load_mat_file(path: str) -> HomoGraph:
         num_nodes = len(feat),
         edge_index = (torch.from_numpy(src_index), torch.from_numpy(dest_index)),
         node_prop_dict = {
-            'feat': feat,
-            'label': label, 
+            'feat': torch.from_numpy(feat),
+            'label': torch.from_numpy(label), 
         },
         edge_prop_dict = {},
         num_classes = label.shape[-1],

@@ -50,6 +50,14 @@
         },
 
         {
+            "name": "GraphTransferLearning - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GraphTransferLearning.main",
+            "justMyCode": true,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",
