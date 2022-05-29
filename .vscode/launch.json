@@ -81,5 +81,13 @@
             "module": "dataset.AdaGCN_dataset",
             "justMyCode": true,
         },
+
+        {
+            "name": "test - Office31",
+            "type": "python",
+            "request": "launch",
+            "module": "dataset.Office31",
+            "justMyCode": true,
+        },
     ]
 }
