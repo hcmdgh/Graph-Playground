@@ -61,3 +61,18 @@ class DSAN(nn.Module):
         )
         
         return src_pred, tgt_pred, lmmd_loss 
+
+    def predict(self, img_batch: FloatTensor) -> FloatTensor:
+        # img_batch: float[batch_size x C x H x W]
+        
+        # -> [batch_size x 2048]
+        h = self.resnet(img_batch)
+        
+        if self.bottle_neck:
+            # -> [batch_size x emb_dim]
+            h = self.bottle_fc(h)
+            
+        # out: [batch_size x num_classes]
+        out = self.clf_fc(h)
+        
+        return out 

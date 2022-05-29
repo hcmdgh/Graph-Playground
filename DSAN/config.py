@@ -1,0 +1,18 @@
+DEVICE = 'cuda:4'
+
+SRC_DATASET = 'amazon'
+TGT_DATASET = 'webcam'
+
+# [BEGIN] 对比/消融实验
+USE_LMMD_LOSS = True 
+# [END]
+
+NUM_CLASSES = 31 
+
+BATCH_SIZE = 64
+
+LMMD_LOSS_WEIGHT = 0.5 
+
+LR = [0.001, 0.01, 0.01]
+WEIGHT_DECAY = 5e-4 
+MOMENTUM = 0.9 

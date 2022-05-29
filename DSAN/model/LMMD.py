@@ -62,8 +62,8 @@ class LMMD(nn.Module):
         
         batch_size = src_batch.shape[0]
         
-        weight_ss, weight_tt, weight_st = self.calc_weight(src_label=src_label.cpu().numpy(),
-                                                          tgt_label=tgt_label.cpu().numpy())
+        weight_ss, weight_tt, weight_st = self.calc_weight(src_label=src_label.detach().cpu().numpy(),
+                                                           tgt_label=tgt_label.detach().cpu().numpy())
         
         # weight_ss, weight_tt, weight_st: [batch_size x batch_size]
         weight_ss = to_device(torch.from_numpy(weight_ss))

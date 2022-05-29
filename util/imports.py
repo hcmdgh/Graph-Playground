@@ -11,7 +11,7 @@ from torch import Tensor
 from numpy import ndarray
 import random
 import logging
-from typing import Optional, Union, List, Dict, Tuple, Any, Callable, Iterable, Literal
+from typing import Optional, Union, List, Dict, Tuple, Any, Callable, Iterable, Literal, Iterator, Generator
 import itertools
 import math
 from datetime import datetime, date, timedelta

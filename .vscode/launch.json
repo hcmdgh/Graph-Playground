@@ -58,6 +58,14 @@
         },
 
         {
+            "name": "DSAN - main",
+            "type": "python",
+            "request": "launch",
+            "module": "DSAN.main",
+            "justMyCode": true,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",
