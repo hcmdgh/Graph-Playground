@@ -3,7 +3,7 @@ from util import *
 
 class EarlyStopping:
     def __init__(self,
-                 monitor_epochs: int = 50):
+                 monitor_epochs: int):
         self.loss_list: list[float] = []  
         
         self.monitor_epochs = monitor_epochs 
