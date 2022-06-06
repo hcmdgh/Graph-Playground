@@ -26,10 +26,10 @@
         },
 
         {
-            "name": "GraphSAGE - main",
+            "name": "GraphSAGE - main_pyg",
             "type": "python",
             "request": "launch",
-            "module": "GraphSAGE.main",
+            "module": "GraphSAGE.main_pyg",
             "justMyCode": true,
         },
 
@@ -63,6 +63,14 @@
             "request": "launch",
             "module": "DSAN.main",
             "justMyCode": true,
+        },
+
+        {
+            "name": "MetaPath2Vec - main",
+            "type": "python",
+            "request": "launch",
+            "module": "MetaPath2Vec.main",
+            "justMyCode": false,
         },
 
         {

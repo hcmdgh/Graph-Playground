@@ -5,3 +5,4 @@ from .graph import *
 from .early_stopping import * 
 from .model import * 
 from .dataloader import * 
+from .embedding import * 

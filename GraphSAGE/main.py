@@ -47,7 +47,7 @@ def main():
     val_metric = MultiClassificationMetric(status='val')
     test_metric = MultiClassificationMetric(status='test')
     
-    early_stopping = EarlyStopping()
+    early_stopping = EarlyStopping(monitor_epochs=50)
     
     for epoch in itertools.count(1):
         def train_epoch():

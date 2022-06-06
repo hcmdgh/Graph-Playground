@@ -41,8 +41,9 @@ import dgl.data.utils as dglutil
 import torch_geometric as pyg
 import torch_geometric.data as pygdata 
 import torch_geometric.nn as pygnn 
+import torch_geometric.nn.conv as pygconv 
 import torch_geometric.loader as pygloader 
 # =========================
 
-IntTensor = FloatTensor = BoolTensor = Tensor
+IntTensor = FloatTensor = BoolTensor = FloatScalarTensor = Tensor
 IntArray = FloatArray = BoolArray = ndarray
