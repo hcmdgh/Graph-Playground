@@ -93,7 +93,7 @@ def node_classification(emb: FloatTensor,
             
         metric.measure(epoch=epoch, y_true=y_true, y_pred=y_pred, verbose=verbose)
 
-        if early_stopping.should_stop:
+        if early_stopping._can_stop:
             break 
         # [END]
         

@@ -15,7 +15,7 @@ from typing import Optional, Union, List, Dict, Tuple, Any, Callable, Iterable, 
 import itertools
 import math
 from datetime import datetime, date, timedelta
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, deque 
 from tqdm import tqdm
 from pprint import pprint
 import pickle

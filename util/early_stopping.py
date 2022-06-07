@@ -1,29 +1,57 @@
-from util import * 
+from .imports import * 
 
 
 class EarlyStopping:
     def __init__(self,
-                 monitor_epochs: int):
-        self.loss_list: list[float] = []  
-        
-        self.monitor_epochs = monitor_epochs 
+                 monitor_field: str,
+                 tolerance_epochs: int,
+                 expected_trend: Literal['asc', 'desc'] = 'desc'):
+        self.tolerance_epochs = tolerance_epochs
+        self.expected_trend = expected_trend
+        self.monitor_field = monitor_field
 
+        self.best_val = 0. 
+        self.best_epoch = -1 
+        self.best_dict = {} 
         self.should_stop = False 
         
-    def record_loss(self, loss):
-        if not isinstance(loss, float):
-            loss = float(loss)
+    def record(self, **kwargs):
+        for key, val in kwargs.items():
+            if isinstance(val, (FloatArray, FloatTensor)):
+                kwargs[key] = float(val)
+                
+        epoch = kwargs['epoch']
+        val = kwargs[self.monitor_field]
             
-        self.loss_list.append(loss)
-        
-        # 如果取最后n次loss，loss一直没下降，则early stop
-        if len(self.loss_list) > self.monitor_epochs:
-            monitor_list = self.loss_list[-self.monitor_epochs:]
-            
-            if min(monitor_list) == monitor_list[0]:
-                self.should_stop = True 
+        if self.best_epoch < 0:
+            self.best_epoch = epoch 
+            self.best_val = val 
+            self.best_dict = kwargs
+        else:
+            if self.expected_trend == 'asc':
+                if val > self.best_val:
+                    self.best_val = val 
+                    self.best_epoch = epoch 
+                    self.best_dict = kwargs
+            elif self.expected_trend == 'desc':
+                if val < self.best_val:
+                    self.best_val = val 
+                    self.best_epoch = epoch 
+                    self.best_dict = kwargs
+            else:
+                raise AssertionError
 
-    def check_stop(self):
+            if epoch - self.best_epoch > self.tolerance_epochs:
+                self.should_stop = True 
+                
+    def check_stop(self) -> Optional[dict]:
         if self.should_stop:
-            print("Early Stop!!!")
-            exit()
+            return self.best_dict 
+        else:
+            return None 
+
+    def auto_stop(self):
+        if self.should_stop:
+            print("End of training, the best result:")
+            print(self.best_dict)
+            exit() 

@@ -74,6 +74,14 @@
         },
 
         {
+            "name": "VGAE - main",
+            "type": "python",
+            "request": "launch",
+            "module": "VGAE.main",
+            "justMyCode": false,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",
