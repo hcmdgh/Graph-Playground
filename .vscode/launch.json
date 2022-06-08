@@ -82,6 +82,22 @@
         },
 
         {
+            "name": "LDETM - main",
+            "type": "python",
+            "request": "launch",
+            "module": "LDETM.main",
+            "justMyCode": false,
+        },
+
+        {
+            "name": "LDETM - preprocess",
+            "type": "python",
+            "request": "launch",
+            "module": "LDETM.preprocess",
+            "justMyCode": false,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",

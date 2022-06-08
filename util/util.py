@@ -1,6 +1,6 @@
 from .imports import * 
 
-_device = None 
+_device = torch.device('cpu')
 
 
 def init_log(filename: Optional[str] = None):
@@ -43,10 +43,35 @@ def seed_all(seed: Optional[int]):
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     
+    
+def auto_set_device() -> torch.device:
+    exe_res = os.popen('gpustat --json').read() 
+    
+    state_dict = json.loads(exe_res)
+    
+    gpu_infos = [] 
+    
+    for gpu_entry in state_dict['gpus']:
+        gpu_id = int(gpu_entry['index'])
+        used_mem = int(gpu_entry['memory.used'])
+
+        gpu_infos.append((used_mem, gpu_id))
+    
+    gpu_infos.sort()
+    
+    global _device 
+    _device = torch.device(f'cuda:{gpu_infos[0][1]}')
+    
+    return _device 
+
 
 def set_device(device_name: str):
     global _device
     _device = torch.device(device_name)
+    
+    
+def get_device() -> torch.device:
+    return _device 
 
 
 def to_device(obj: Any) -> Any:

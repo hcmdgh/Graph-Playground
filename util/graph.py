@@ -132,55 +132,103 @@ class EdgeIndex_高效版:
         return neighbor_idx_mat 
 
 
-@dataclass 
 class HeteroGraph:
-    node_types: set[str]
-    num_nodes_dict: dict[str, int]
-    edge_index_dict: dict[tuple[str, str, str], tuple[IntTensor, IntTensor]]
+    def __init__(self, 
+                 *,
+                 node_types: Optional[set[str]] = None,
+                 edge_types: Optional[set[tuple[str, str, str]]] = None,
+                 num_nodes_dict: Optional[dict[str, int]] = None,
+                 num_edges_dict: Optional[dict[tuple[str, str, str], int]] = None,
+                 edge_index_dict: dict[tuple[str, str, str], tuple[IntTensor, IntTensor]],
+                 node_attr_dict: Optional[dict[str, dict[str, Tensor]]] = None,
+                 edge_attr_dict: Optional[dict[str, dict[tuple[str, str, str], Tensor]]] = None,
+                 num_classes: Optional[int] = None):
+        for edge_type, (src_edge_index, dest_edge_index) in edge_index_dict.items():
+            if isinstance(src_edge_index, IntTensor):
+                pass 
+            elif isinstance(src_edge_index, IntArray):
+                edge_index_dict[edge_type] = (torch.from_numpy(src_edge_index), torch.from_numpy(dest_edge_index))    
+            elif isinstance(src_edge_index, list):
+                edge_index_dict[edge_type] = (
+                    torch.tensor(src_edge_index, dtype=torch.int64),
+                    torch.tensor(dest_edge_index, dtype=torch.int64),
+                )
+            else:
+                raise AssertionError
     
-    # 属性名 -> 结点类型 -> 属性值
-    node_prop_dict: dict[str, dict[str, Tensor]]
-    
-    # 属性名 -> 边类型 -> 属性值
-    edge_prop_dict: dict[str, dict[tuple[str, str, str], Tensor]]  
-    
-    num_classes: Optional[int] = None 
-    
-    @property
-    def edge_types(self) -> set[tuple[str, str, str]]:
-        return set(self.edge_index_dict)
+        self.edge_index_dict = edge_index_dict 
+        self.num_classes = num_classes
+        
+        if not node_types:
+            self.node_types = set() 
+            
+            for src_type, _, dest_type in edge_index_dict:
+                self.node_types.add(src_type) 
+                self.node_types.add(dest_type) 
+        else:
+            self.node_types = node_types 
+            
+        if not edge_types:
+            self.edge_types = set(edge_index_dict)
+        else:
+            self.edge_types = edge_types 
+
+        if not num_nodes_dict:
+            self.num_nodes_dict = dict()
+
+            for (src_type, _, dest_type), (src_edge_index, dest_edge_index) in edge_index_dict.items():
+                n = int(torch.max(src_edge_index)) + 1 
+                self.num_nodes_dict[src_type] = max(n, self.num_nodes_dict.get(src_type, n))
+                
+                n = int(torch.max(dest_edge_index)) + 1 
+                self.num_nodes_dict[dest_type] = max(n, self.num_nodes_dict.get(dest_type, n))
+        else:
+            self.num_nodes_dict = num_nodes_dict 
+
+        assert not num_edges_dict 
+        self.num_edges_dict = {edge_type: len(src_edge_index) for edge_type, (src_edge_index, dest_edge_index) in edge_index_dict.items()}
+            
+        if not node_attr_dict:
+            self.node_attr_dict = dict() 
+        else:
+            for attr_name in node_attr_dict:
+                for node_type, attr_val in node_attr_dict[attr_name].items():
+                    assert len(attr_val) == self.num_nodes_dict[node_type] 
+            
+            self.node_attr_dict = node_attr_dict
+
+        if not edge_attr_dict:
+            self.edge_attr_dict = dict() 
+        else:
+            for attr_name in edge_attr_dict:
+                for edge_type, attr_val in edge_attr_dict[attr_name].items():
+                    assert len(attr_val) == self.num_edges_dict[edge_type] 
+            
+            self.edge_attr_dict = edge_attr_dict
     
     def to_dgl(self,
-               with_prop: bool = False) -> dgl.DGLHeteroGraph:
+               with_attr: bool = False) -> dgl.DGLHeteroGraph:
         hg = dgl.heterograph(data_dict=self.edge_index_dict,
                              num_nodes_dict=self.num_nodes_dict)
         
-        if with_prop:
-            for prop_name in self.node_prop_dict:
-                for node_type, prop_val in self.node_prop_dict[prop_name].items():
-                    hg.nodes[node_type].data[prop_name] = prop_val 
+        if with_attr:
+            for attr_name in self.node_attr_dict:
+                for node_type, attr_val in self.node_attr_dict[attr_name].items():
+                    hg.nodes[node_type].data[attr_name] = attr_val 
                     
-            for prop_name in self.edge_prop_dict:
-                for edge_type, prop_val in self.edge_prop_dict[prop_name].items():
-                    hg.edges[edge_type].data[prop_name] = prop_val 
+            for attr_name in self.edge_attr_dict:
+                for edge_type, attr_val in self.edge_attr_dict[attr_name].items():
+                    hg.edges[edge_type].data[attr_name] = attr_val 
                 
         return hg 
     
     @classmethod
     def from_dgl(cls, 
-                 hg: dgl.DGLHeteroGraph,
-                 **kwargs) -> 'HeteroGraph':
+                 hg: dgl.DGLHeteroGraph) -> 'HeteroGraph':
         raise NotImplementedError
-        return cls(
-            node_types = set(hg.ntypes),
-            num_nodes_dict = None,
-            edge_index_dict = None,
-            node_prop_dict = None, 
-            edge_prop_dict = None,
-        )
 
     def save_to_file(self, file_path: str):
-        torch.save(dataclasses.asdict(self), file_path)
+        torch.save(self.__dict__, file_path)
         
     @classmethod
     def load_from_file(cls, file_path: str) -> 'HeteroGraph':
@@ -188,26 +236,60 @@ class HeteroGraph:
         
         return cls(**dict_)
 
-    def add_reverse_edges(self):
-        rev_edge_index_dict = {}
 
-        for edge_type, edge_index in self.edge_index_dict.items():
-            rev_edge_index_dict[(edge_type[2], edge_type[1] + '_rev', edge_type[0])] = (edge_index[1], edge_index[0]) 
-
-        self.edge_index_dict.update(rev_edge_index_dict)
-
-
-@dataclass 
 class HomoGraph:
-    num_nodes: int 
-    edge_index: tuple[IntTensor, IntTensor]
-    node_prop_dict: dict[str, Tensor]
-    edge_prop_dict: dict[tuple[str, str, str], Tensor]
-    num_classes: Optional[int] = None 
+    def __init__(self,
+                 *,
+                 num_nodes: Optional[int] = None,  
+                 num_edges: Optional[int] = None,  
+                 edge_index: tuple[IntTensor, IntTensor],
+                 node_attr_dict: Optional[dict[str, Tensor]] = None,
+                 edge_attr_dict: Optional[dict[tuple[str, str, str], Tensor]] = None,
+                 num_classes: Optional[int] = None) -> None:
+        src_edge_index, dest_edge_index = edge_index
+                 
+        if isinstance(src_edge_index, IntTensor):
+            pass 
+        elif isinstance(src_edge_index, IntArray):
+            src_edge_index = torch.from_numpy(src_edge_index)
+            dest_edge_index = torch.from_numpy(dest_edge_index)
+
+            edge_index = (src_edge_index, dest_edge_index)    
+        elif isinstance(src_edge_index, list):
+            src_edge_index = torch.tensor(src_edge_index, dtype=torch.int64)
+            dest_edge_index = torch.tensor(dest_edge_index, dtype=torch.int64)
+
+            edge_index = (src_edge_index, dest_edge_index)    
+        else:
+            raise AssertionError
+
+        if not num_nodes:
+            self.num_nodes = max(
+                int(torch.max(src_edge_index)) + 1,
+                int(torch.max(dest_edge_index)) + 1,
+            )
+        else:
+            self.num_nodes = num_nodes 
+            
+        assert not num_edges 
+        self.num_edges = len(src_edge_index)
+        
+        if not node_attr_dict:
+            self.node_attr_dict = dict() 
+        else:
+            for attr_name, attr_val in node_attr_dict.items():
+                assert len(attr_val) == self.num_nodes
+            
+            self.node_attr_dict = node_attr_dict
+            
+        if not edge_attr_dict:
+            self.edge_attr_dict = dict() 
+        else:
+            for attr_name, attr_val in edge_attr_dict.items():
+                assert len(attr_val) == self.num_edges
+            
+            self.edge_attr_dict = edge_attr_dict
     
-    @property
-    def num_edges(self) -> int:
-        return len(self.edge_index[0])
     
     def to_dgl(self,
                with_prop: bool = False) -> dgl.DGLGraph:
