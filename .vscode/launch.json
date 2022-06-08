@@ -26,6 +26,14 @@
         },
 
         {
+            "name": "ACDNE - preprocess",
+            "type": "python",
+            "request": "launch",
+            "module": "ACDNE.preprocess",
+            "justMyCode": true,
+        },
+
+        {
             "name": "GraphSAGE - main_pyg",
             "type": "python",
             "request": "launch",

@@ -24,3 +24,28 @@ class MLP(nn.Module):
         
     def forward(self, inp: FloatTensor) -> FloatTensor:
         return self.seq(inp)
+
+
+class _GradRevLayer(torch.autograd.Function):
+    rate = 0.0
+
+    @staticmethod
+    def forward(ctx, *args, **kwargs):
+        return args[0].view_as(args[0])
+
+    @staticmethod
+    def backward(ctx, *grad_outputs):
+        grad_output = grad_outputs[0].neg() * _GradRevLayer.rate
+        return grad_output, None
+
+
+class GradRevLayer(nn.Module):
+    def __init__(self, rate: float = 0.5):
+        super().__init__()
+        
+        _GradRevLayer.rate = rate 
+    
+    def forward(self, inp: FloatTensor) -> FloatTensor:
+        out = _GradRevLayer.apply(inp)
+
+        return out 

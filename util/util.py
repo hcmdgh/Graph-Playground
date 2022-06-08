@@ -44,7 +44,13 @@ def seed_all(seed: Optional[int]):
     torch.backends.cudnn.deterministic = True
     
     
-def auto_set_device() -> torch.device:
+def auto_set_device(cpu: bool = False) -> torch.device:
+    global _device 
+
+    if cpu:
+        _device = torch.device('cpu')
+        return _device
+    
     exe_res = os.popen('gpustat --json').read() 
     
     state_dict = json.loads(exe_res)
@@ -59,7 +65,6 @@ def auto_set_device() -> torch.device:
     
     gpu_infos.sort()
     
-    global _device 
     _device = torch.device(f'cuda:{gpu_infos[0][1]}')
     
     return _device 

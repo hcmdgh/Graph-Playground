@@ -185,7 +185,6 @@ class HeteroGraph:
         else:
             self.num_nodes_dict = num_nodes_dict 
 
-        assert not num_edges_dict 
         self.num_edges_dict = {edge_type: len(src_edge_index) for edge_type, (src_edge_index, dest_edge_index) in edge_index_dict.items()}
             
         if not node_attr_dict:
@@ -208,8 +207,10 @@ class HeteroGraph:
     
     def to_dgl(self,
                with_attr: bool = False) -> dgl.DGLHeteroGraph:
-        hg = dgl.heterograph(data_dict=self.edge_index_dict,
-                             num_nodes_dict=self.num_nodes_dict)
+        hg = dgl.heterograph(
+            data_dict = self.edge_index_dict,
+            num_nodes_dict = self.num_nodes_dict,
+        )
         
         if with_attr:
             for attr_name in self.node_attr_dict:
@@ -246,6 +247,8 @@ class HomoGraph:
                  node_attr_dict: Optional[dict[str, Tensor]] = None,
                  edge_attr_dict: Optional[dict[tuple[str, str, str], Tensor]] = None,
                  num_classes: Optional[int] = None) -> None:
+        self.num_classes = num_classes 
+        
         src_edge_index, dest_edge_index = edge_index
                  
         if isinstance(src_edge_index, IntTensor):
@@ -262,6 +265,8 @@ class HomoGraph:
             edge_index = (src_edge_index, dest_edge_index)    
         else:
             raise AssertionError
+        
+        self.edge_index = edge_index
 
         if not num_nodes:
             self.num_nodes = max(
@@ -271,7 +276,6 @@ class HomoGraph:
         else:
             self.num_nodes = num_nodes 
             
-        assert not num_edges 
         self.num_edges = len(src_edge_index)
         
         if not node_attr_dict:
@@ -292,15 +296,17 @@ class HomoGraph:
     
     
     def to_dgl(self,
-               with_prop: bool = False) -> dgl.DGLGraph:
-        g = dgl.graph(data=self.edge_index,
-                       num_nodes=self.num_nodes)
+               with_attr: bool = False) -> dgl.DGLGraph:
+        g = dgl.graph(
+            data = self.edge_index,
+            num_nodes = self.num_nodes,
+        )
         
-        if with_prop:
-            for prop_name, prop_val in self.node_prop_dict.items():
+        if with_attr:
+            for prop_name, prop_val in self.node_attr_dict.items():
                 g.ndata[prop_name] = prop_val 
                     
-            for prop_name, prop_val in self.edge_prop_dict.items():
+            for prop_name, prop_val in self.edge_attr_dict.items():
                 g.edata[prop_name] = prop_val 
 
         return g 
@@ -310,12 +316,12 @@ class HomoGraph:
         return cls(
             num_nodes = g.num_nodes(),
             edge_index = tuple(g.edges()),
-            node_prop_dict = dict(g.ndata),
-            edge_prop_dict = dict(g.edata),
+            node_attr_dict = dict(g.ndata),
+            edge_attr_dict = dict(g.edata),
         )
 
     def save_to_file(self, file_path: str):
-        torch.save(dataclasses.asdict(self), file_path)
+        torch.save(self.__dict__, file_path)
         
     @classmethod
     def load_from_file(cls, file_path: str) -> 'HomoGraph':

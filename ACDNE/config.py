@@ -1,9 +1,11 @@
-DEVICE = 'cuda:0'
+SRC_DATASET = '/home/Dataset/GengHao/HomoGraph/ACDNE/citationv1.pt'
+TGT_DATASET = '/home/Dataset/GengHao/HomoGraph/ACDNE/dblpv7.pt'
 
-SRC_DATASET = 'acmv9'
-TGT_DATASET = 'citationv1'
+BATCH_SIZE = 256
 
-MODEL = 'MLP'
+EARLY_STOPPING_EPOCHS = 20 
 
-LR = 0.005
-WEIGHT_DECAY = 5e-4 
+LR = 0.02
+MOMENTUM = 0.9
+WEIGHT_DECAY = 0.0005
+ 

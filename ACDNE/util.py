@@ -39,3 +39,42 @@ def combine_graphs(src_g: dgl.DGLGraph,
     combined_g = dgl.add_self_loop(combined_g)
     
     return combined_g 
+
+
+def norm_adj_mat(adj_mat: FloatArray) -> FloatArray:
+    row_sum = np.sum(adj_mat, axis=1, keepdims=True)
+    row_sum_inv = np.power(row_sum, -1)
+    row_sum_inv[np.isinf(row_sum_inv)] = 0.
+    
+    out_adj_mat = adj_mat * row_sum_inv 
+    
+    return out_adj_mat 
+
+
+def aggr_adj_mat(adj_mat: FloatArray,
+                 step: int = 3) -> FloatArray:
+    assert step >= 2 
+                 
+    adj_mat = norm_adj_mat(adj_mat)
+    a_k = a = adj_mat
+
+    for k in range(2, step + 1):
+        a_k = a_k @ adj_mat
+        a = a + a_k / k
+        
+    return a
+
+
+def calc_PPMI_mat(adj_mat: FloatArray) -> FloatArray:
+    np.fill_diagonal(adj_mat, 0.)
+    adj_mat = norm_adj_mat(adj_mat)
+    N = len(adj_mat)
+
+    col_sum = np.sum(adj_mat, axis=0, keepdims=True)
+    col_sum[col_sum == 0.] = 1. 
+
+    ppmi = np.log(N * adj_mat / col_sum)
+    ppmi[np.isnan(ppmi)] = 0.
+    ppmi[ppmi < 0.] = 0. 
+    
+    return ppmi
