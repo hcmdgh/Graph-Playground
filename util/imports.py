@@ -30,6 +30,9 @@ import json
 import yaml 
 import copy 
 import csv 
+import matplotlib.pyplot as plt 
+import networkx as nx 
+import re 
 
 # ========== DGL ==========
 import dgl

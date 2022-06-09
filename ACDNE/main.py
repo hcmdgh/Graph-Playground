@@ -44,6 +44,19 @@ def main():
     feat_neigh_S = PPMI_norm_S @ feat_S
     feat_neigh_T = PPMI_norm_T @ feat_T
     
+    # [BEGIN] Visualization
+    label_S_arbitrary = torch.argmax(label_S_th, dim=-1).cpu()
+    label_T_arbitrary = torch.argmax(label_T_th, dim=-1).cpu()
+    
+    g_S.ndata['label'] = label_S_arbitrary
+    g_T.ndata['label'] = label_T_arbitrary
+    
+    nx.write_gexf(dgl.to_networkx(g_S, node_attrs=['label']), './ACDNE/output/citationv1.gexf')
+    nx.write_gexf(dgl.to_networkx(g_T, node_attrs=['label']), './ACDNE/output/dblpv7.gexf')
+
+    exit() 
+    # [END]
+    
     # [BEGIN] 合并源图和目标图    
     # g_S.ndata['feat'] = graph_S.node_prop_dict['feat']
     # g_S.ndata['label'] = graph_S.node_prop_dict['label'].to(torch.float32)
