@@ -15,6 +15,7 @@ import random
 import logging
 from typing import Optional, Union, List, Dict, Tuple, Any, Callable, Iterable, Literal, Iterator
 import itertools
+import functools
 import math
 from datetime import datetime, date, timedelta
 from collections import defaultdict, namedtuple, deque 

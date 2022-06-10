@@ -5,7 +5,7 @@ class EarlyStopping:
     def __init__(self,
                  monitor_field: str,
                  tolerance_epochs: int,
-                 expected_trend: Literal['asc', 'desc'] = 'desc'):
+                 expected_trend: Literal['asc', 'desc']):
         self.tolerance_epochs = tolerance_epochs
         self.expected_trend = expected_trend
         self.monitor_field = monitor_field

@@ -237,6 +237,24 @@ class HeteroGraph:
         
         return cls(**dict_)
 
+    @classmethod 
+    def generate_bipartite(cls,
+                           src_num_nodes: int = 6,
+                           dest_num_nodes: int = 8,
+                           num_edges: int = 10,
+                           feat_dim: int = 3) -> 'HeteroGraph':
+        src_edge_index = torch.randint(low=0, high=src_num_nodes, size=[num_edges])
+        dest_edge_index = torch.randint(low=0, high=dest_num_nodes, size=[num_edges])
+        
+        src_feat = torch.randint(low=0, high=10, size=[src_num_nodes, feat_dim], dtype=torch.float32)
+        dest_feat = torch.randint(low=0, high=10, size=[dest_num_nodes, feat_dim], dtype=torch.float32)
+
+        return cls(
+            num_nodes_dict = { 'paper': src_num_nodes, 'author': dest_num_nodes },
+            edge_index_dict = { ('paper', 'pa', 'author'): (src_edge_index, dest_edge_index) },
+            node_attr_dict = { 'feat': { 'paper': src_feat, 'author': dest_feat } },
+        )
+
 
 class HomoGraph:
     def __init__(self,

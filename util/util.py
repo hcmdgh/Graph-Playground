@@ -44,10 +44,10 @@ def seed_all(seed: Optional[int]):
     torch.backends.cudnn.deterministic = True
     
     
-def auto_set_device(cpu: bool = False) -> torch.device:
+def auto_set_device(use_gpu: bool = True) -> torch.device:
     global _device 
 
-    if cpu:
+    if not use_gpu:
         _device = torch.device('cpu')
         return _device
     

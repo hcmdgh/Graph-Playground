@@ -98,6 +98,14 @@
         },
 
         {
+            "name": "HelloWorld - main",
+            "type": "python",
+            "request": "launch",
+            "module": "HelloWorld.main",
+            "justMyCode": false,
+        },
+
+        {
             "name": "LDETM - preprocess",
             "type": "python",
             "request": "launch",
@@ -110,6 +118,22 @@
             "type": "python",
             "request": "launch",
             "module": "GraphVisualization.main",
+            "justMyCode": false,
+        },
+
+        {
+            "name": "HGT - main",
+            "type": "python",
+            "request": "launch",
+            "module": "HGT.main",
+            "justMyCode": false,
+        },
+
+        {
+            "name": "HGT - main_official",
+            "type": "python",
+            "request": "launch",
+            "module": "HGT.main_off",
             "justMyCode": false,
         },
 
