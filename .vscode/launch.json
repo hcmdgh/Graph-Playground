@@ -138,6 +138,14 @@
         },
 
         {
+            "name": "GCN - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GCN.main",
+            "justMyCode": false,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",

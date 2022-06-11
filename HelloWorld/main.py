@@ -1,54 +1,89 @@
-from util import * 
+from sklearn.feature_extraction.text import CountVectorizer
+import random 
+import nltk 
+from nltk.stem import WordNetLemmatizer
 
+lemmatizer = WordNetLemmatizer()
 
-class MyGCN(pygnn.MessagePassing):
-    def __init__(self):
-        super().__init__(aggr='add')
-        
-    def forward(self,
-                edge_index_dict,
-                feat_dict):
-        out = self.propagate(
-            torch.stack(edge_index_dict[('paper', 'pa', 'author')]),
-            src_feat = feat_dict['paper'], 
-            dest_feat = feat_dict['author'],
-        )
-        
-        return out 
+def convert_NNS(word_list: list[str]) -> list[str]:
+    """
+    词形还原。将常用名词复数形式(NNS)还原为单数形式。
     
-    def message(self,
-                src_feat_j,
-                dest_feat_i):
-        out = src_feat_j * 2 + dest_feat_i
-        
-        return out 
-
-        
-def msg_func(edges):
-    src = edges.src['feat']
-    dest = edges.dst['feat'] 
+    例如：
+    input: ['She', 'eats', 'three', 'apples', 'in', 'several', 'days', 'days.']
+    output: ['She', 'eats', 'three', 'apple', 'in', 'several', 'day', 'days.']
+    """
+    tags = nltk.pos_tag(word_list)
+    res = []
     
-    return { 'm': src * 2 + dest }
+    for word, tag in tags:
+        if tag == 'NNS':
+            word = lemmatizer.lemmatize(word, 'n')
+        
+        res.append(word)
+
+    return res 
 
 
-def reduce_func(nodes):
-    mailbox = nodes.mailbox 
+def clear_text(text: str) -> str:
+    text = text.replace('[SEP]', ' ')
+    text = text.replace('[CLS]', ' ')
+    text = text.replace('[UNK]', ' ')
+    text = text.replace('-', ' ')
+    text = text.replace('##', ' ')
+
+    words = text.split()
+    words = convert_NNS(words)
+
+    return '_'.join(words)
+
+# a = 'parkinson [unk] s disease'
+# print(clear_text(a))
+
+with open('/home/Dataset/DuChenguang/MAG/conf_papers_ne_author_zh.json', 'r') as fp:
+    txt = fp.read()
+    txt_lower = txt.lower()
+
+    index = 0 
+
+    while True:
+        index = txt_lower.find('[unk]', index)
+
+        print(index)
+        
+        
+        
+        print(txt[index-50:index+50])
+
+        index += 1 
+
+    exit()
+
+a = [
+    ' '.join([''.join(random.choices('ABCDE_FG', k=1)) for _ in range(5)])
+    for _ in range(6)
+]
+# a.append('耿皓 哈哈 😊 parkinson_[unk]_s_disease')
+
+# print(a)
+
+
+vectorizer = CountVectorizer(token_pattern=r'[^ ]+')
+doc_term_mat = vectorizer.fit_transform(a)
+
+row = doc_term_mat.tocoo().row 
+col = doc_term_mat.tocoo().col 
+
+print(a)
+print(vectorizer.vocabulary_)
+print(row)
+print(col)
+
+id2word = { 
+    id: word for word, id in vectorizer.vocabulary_.items() 
+}
+
+# for i, j in zip(row, col):
+#     word = id2word[j]
     
-    return { 'h': torch.sum(mailbox['m'], dim=1) }
-
-
-hg_graph = HeteroGraph.generate_bipartite()
-
-hg = hg_graph.to_dgl(with_attr=True)
-
-gcn = MyGCN() 
-
-out = gcn(hg_graph.edge_index_dict, hg_graph.node_attr_dict['feat'])
-
-hg.update_all(message_func=msg_func,
-              reduce_func=dglfn.sum('m', 'h'))
-
-out2 = hg.nodes['author'].data['h']
-
-print(out)
-print(out2)
+#     print(i, word)
