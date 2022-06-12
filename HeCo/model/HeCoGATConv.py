@@ -4,13 +4,13 @@ from util import *
 class HeCoGATConv(nn.Module):
     def __init__(self,
                  emb_dim: int,
-                 attn_dropout: float = 0.0,
+                 attn_dropout: float = 0.5,
                  negative_slope: float = 0.01,
                  activation: Optional[Callable] = F.elu):
         super().__init__()
         
-        self.attn_l = nn.Linear(emb_dim, 1, bias=False)
-        self.attn_r = nn.Linear(emb_dim, 1, bias=False)
+        self.attn_S = Parameter(torch.zeros(1, emb_dim))
+        self.attn_D = Parameter(torch.zeros(1, emb_dim))
 
         self.attn_dropout = nn.Dropout(attn_dropout)
         
@@ -20,55 +20,68 @@ class HeCoGATConv(nn.Module):
         
         self.reset_parameters() 
         
+        self.device = get_device() 
+        self.to(self.device)
+        
     def reset_parameters(self):
-        gain = nn.init.calculate_gain('relu')
-        nn.init.xavier_normal_(self.attn_l.weight, gain)
-        nn.init.xavier_normal_(self.attn_r.weight, gain)
+        glorot_(self.attn_S)
+        glorot_(self.attn_D)
 
     # [input]
     #   bg: 二分图（邻居结点->目标结点）
     #   feat_S: float[num_nodes_S x emb_dim]
-    #   feat_T: float[num_nodes_T x emb_dim]
+    #   feat_D: float[num_nodes_D x emb_dim]
     # [output]
-    #   out_feat_T: float[num_nodes_T x emb_dim]
+    #   out_D: float[num_nodes_D x emb_dim]
     def forward(self,
                 bg: dgl.DGLHeteroGraph,
                 feat_S: FloatTensor,
-                feat_T: FloatTensor) -> FloatTensor:
+                feat_D: FloatTensor) -> FloatTensor:
         # bg: 二分图（邻居->目标结点）
         # feat_S: float[num_nodes_S x emb_dim]
-        # feat_T: float[num_nodes_T x emb_dim]
+        # feat_D: float[num_nodes_D x emb_dim]
         
-        with bg.local_scope():
-            # TODO attn_dropout 
-            
-            # el: [num_nodes_S x 1]
-            el = self.attn_l(feat_S)
-            
-            # er: [num_nodes_T x 1]
-            er = self.attn_r(feat_T)
-            
-            bg.srcdata['_feat'] = feat_S 
-            bg.srcdata['_el'] = el 
-            bg.dstdata['_er'] = er 
-            
-            bg.apply_edges(dglfn.u_add_v('_el', '_er', '_e'))
-            
-            # e: [num_edges x 1]
-            e = bg.edata.pop('_e')
-            e = self.leaky_relu(e)
-            
-            # attn: [num_edges x 1]
-            attn = dglF.edge_softmax(graph=bg, logits=e)
-            bg.edata['_attn'] = attn 
-            
-            bg.update_all(message_func=dglfn.u_mul_e('_feat', '_attn', '_'),
-                          reduce_func=dglfn.sum('_', '_feat'))
-            
-            # out_feat_T: [num_nodes_T x emb_dim]
-            out_feat_T = bg.dstdata.pop('_feat')
-            
-            if self.activation is not None:
-                out_feat_T = self.activation(out_feat_T)
+        # attn_S/attn_D: [1 x emb_dim]
+        attn_S = self.attn_dropout(self.attn_S)
+        attn_D = self.attn_dropout(self.attn_D)
+        
+        # e_S: [num_nodes_S x 1]
+        e_S = (feat_S * attn_S).sum(dim=-1, keepdim=True)
 
-            return out_feat_T
+        # e_D: [num_nodes_D x 1]
+        e_D = (feat_D * attn_D).sum(dim=-1, keepdim=True)
+
+        # bg.srcdata['_feat_S'] = feat_S 
+        bg.srcdata['_e_S'] = e_S 
+        bg.dstdata['_e_D'] = e_D 
+        
+        bg.apply_edges(dglfn.u_add_v('_e_S', '_e_D', '_e'))
+        
+        bg.srcdata.pop('_e_S') 
+        bg.dstdata.pop('_e_D')
+        
+        # e: [num_edges x 1]
+        e = self.leaky_relu(bg.edata.pop('_e')) 
+
+        # a: [num_edges x 1]
+        a = dglF.edge_softmax(bg, e)
+        bg.edata['_a'] = a 
+        
+        # feat_S: [num_nodes_S x emb_dim]
+        bg.srcdata['_feat_S'] = feat_S
+
+        bg.update_all(
+            message_func = dglfn.u_mul_e('_feat_S', '_a', '_'),
+            reduce_func = dglfn.sum('_', '_out')
+        )
+        
+        bg.srcdata.pop('_feat_S')
+        bg.edata.pop('_a')
+        
+        # out_D: [num_nodes_D x emb_dim]
+        out_D = bg.dstdata.pop('_out')
+        
+        if self.activation is not None:
+            out_D = self.activation(out_D)
+
+        return out_D 

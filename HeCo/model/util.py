@@ -3,21 +3,6 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import roc_auc_score, normalized_mutual_info_score, adjusted_rand_score
 
 
-def calc_cosine_similarity_matrix(t1: FloatTensor, t2: FloatTensor) -> FloatTensor:
-    # t1: float[B x D]
-    # t2: float[B x D]
-    
-    t1_norm = torch.norm(t1, dim=1, keepdim=True)
-    t2_norm = torch.norm(t2, dim=1, keepdim=True)
-    numerator = torch.mm(t1, t2.t())
-    denominator = torch.mm(t1_norm, t2_norm.t())
-
-    # res: [B x B]，其中res[i, j]表示t1[i]与t2[j]的余弦相似度
-    res = numerator / denominator 
-    
-    return res 
-
-
 def node_clustering(emb: FloatArray, 
                     labels: IntArray, 
                     num_classes: int) -> tuple[float, float]:

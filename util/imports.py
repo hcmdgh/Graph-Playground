@@ -34,6 +34,7 @@ import csv
 import matplotlib.pyplot as plt 
 import networkx as nx 
 import re 
+import xgboost as xgb
 
 # ========== DGL ==========
 import dgl
@@ -53,3 +54,5 @@ import torch_geometric.loader as pygloader
 
 IntTensor = FloatTensor = BoolTensor = FloatScalarTensor = Tensor
 IntArray = FloatArray = BoolArray = ndarray
+NodeType = str 
+EdgeType = tuple[str, str, str]

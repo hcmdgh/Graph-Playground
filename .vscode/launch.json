@@ -146,6 +146,14 @@
         },
 
         {
+            "name": "HeCo - main",
+            "type": "python",
+            "request": "launch",
+            "module": "HeCo.main",
+            "justMyCode": false,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",
