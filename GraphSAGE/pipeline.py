@@ -11,6 +11,8 @@ class GraphSAGE_Pipeline:
         use_gpu: bool = True,
         add_self_loop: bool = False,
         to_bidirected: bool = True,
+        use_sampler: bool = False,
+        batch_size: int = 128,
         hidden_dim: int = 256,
         num_layers: int = 3,
         dropout: float = 0.5,
@@ -59,18 +61,50 @@ class GraphSAGE_Pipeline:
             expected_trend = 'asc', 
         )
         
+        if use_sampler:
+            sampler = dgl.dataloading.MultiLayerFullNeighborSampler(num_layers=num_layers)
+            
+            dataloader = dgl.dataloading.DataLoader(
+                graph = g,
+                indices = torch.arange(g.num_nodes())[train_mask].to(device),
+                graph_sampler = sampler,
+                batch_size = batch_size,
+                shuffle = True,
+                drop_last = False,
+                num_workers = 0, 
+                device = device,
+            )
+        
         for epoch in itertools.count(1):
             model.train() 
             
-            logits = model(g, feat)
+            if not use_sampler:
+                logits = model(g, feat)
+                
+                loss = F.cross_entropy(input=logits[train_mask], target=label[train_mask])
+                
+                optimizer.zero_grad()
+                loss.backward() 
+                optimizer.step() 
             
-            loss = F.cross_entropy(input=logits[train_mask], target=label[train_mask])
-            
-            optimizer.zero_grad()
-            loss.backward() 
-            optimizer.step() 
-            
-            
+            else:
+                loss_list = [] 
+                
+                for step, (in_nids, out_nids, blocks) in enumerate(dataloader):
+                    feat_batch = feat[in_nids]
+                    
+                    logits = model.forward_batch(blocks, feat_batch)    
+
+                    loss = F.cross_entropy(input=logits, target=label[out_nids])
+                
+                    optimizer.zero_grad()
+                    loss.backward() 
+                    optimizer.step() 
+
+                    loss_list.append(float(loss))
+
+                loss = np.mean(loss_list)
+                
             model.eval() 
             
             with torch.no_grad():

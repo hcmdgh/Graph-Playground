@@ -42,7 +42,10 @@ class SAGEConv(nn.Module):
                 g: dgl.DGLGraph,
                 feat: Union[FloatTensor, tuple[FloatTensor, FloatTensor]]) -> FloatTensor:
         if isinstance(feat, FloatTensor):
-            feat_S = feat_D = feat 
+            feat_S = feat_D = feat
+            
+            if g.is_block:
+                feat_D = feat_S[:g.num_dst_nodes()] 
         elif isinstance(feat, tuple):
             feat_S, feat_D = feat 
         else:

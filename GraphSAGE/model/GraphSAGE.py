@@ -80,3 +80,22 @@ class GraphSAGE(nn.Module):
         h = self.conv_list[-1](g, h)
                 
         return h 
+
+    
+    def forward_batch(self,
+                      blocks: list[dgl.DGLGraph],
+                      feat: Union[FloatTensor, tuple[FloatTensor, FloatTensor]]) -> FloatTensor:
+        h = feat 
+                
+        for i in range(self.num_layers - 1):
+            conv = self.conv_list[i]
+            bn = self.bn_list[i]
+
+            h = conv(blocks[i], h)
+            h = bn(h)
+            h = torch.relu(h)
+            h = self.dropout(h)
+            
+        h = self.conv_list[-1](blocks[-1], h)
+                
+        return h 
