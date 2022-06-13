@@ -10,10 +10,13 @@ class GraphSAGE_Pipeline:
         homo_graph_path: str,
         use_gpu: bool = True,
         add_self_loop: bool = False,
-        num_layers: int = 2,
-        dropout: float = 0.1,
+        to_bidirected: bool = True,
+        hidden_dim: int = 256,
+        num_layers: int = 3,
+        dropout: float = 0.5,
+        batch_norm: bool = True,
         lr: float = 0.01,
-        weight_decay: float = 5e-4,
+        weight_decay: float = 0.,
         early_stopping_epochs: int = 50,
     ):
         init_log('./log.log')
@@ -30,6 +33,9 @@ class GraphSAGE_Pipeline:
         val_mask = homo_graph.node_attr_dict['val_mask'].numpy()
         test_mask = homo_graph.node_attr_dict['test_mask'].numpy()
         
+        if to_bidirected:
+            g = dgl.to_bidirected(g)
+        
         if add_self_loop:
             g = dgl.remove_self_loop(g)
             g = dgl.add_self_loop(g)
@@ -38,9 +44,11 @@ class GraphSAGE_Pipeline:
         
         model = GraphSAGE(
             in_dim = feat_dim,
+            hidden_dim = hidden_dim,
             out_dim = homo_graph.num_classes,
             num_layers = num_layers,
             dropout = dropout,
+            batch_norm = batch_norm,
         )
         
         optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
