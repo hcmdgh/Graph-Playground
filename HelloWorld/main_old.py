@@ -1,4 +1,7 @@
 from util import * 
+dglnn.GraphConv
+dglnn.SAGEConv
+pygnn.SAGEConv
 
 
 class MyGCN(pygnn.MessagePassing):

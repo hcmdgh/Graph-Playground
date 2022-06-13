@@ -1,1 +1,1 @@
-from .graph_sage import * 
+from .GraphSAGE import * 

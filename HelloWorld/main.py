@@ -1,24 +1,33 @@
 from util import * 
-from sklearn import datasets
+from ogb.nodeproppred import DglNodePropPredDataset
 
-iris = datasets.load_iris()
-X = iris.data
-y = iris.target
+dataset = DglNodePropPredDataset(name='ogbn-arxiv', root='/home/Dataset/DGL')
 
-N = len(X)
-num_train = int(N * 0.8)
-shuffled_indices = np.random.permutation(N)
+split_idx = dataset.get_idx_split()
+train_idx, valid_idx, test_idx = split_idx["train"], split_idx["valid"], split_idx["test"]
+graph, label = dataset[0]
 
-train_mask = np.zeros(N, dtype=bool)
-eval_mask = np.zeros(N, dtype=bool)
-train_mask[shuffled_indices[:num_train]] = True
-eval_mask[shuffled_indices[num_train:]] = True
+train_mask = torch.zeros(graph.num_nodes(), dtype=torch.bool)
+val_mask = torch.zeros(graph.num_nodes(), dtype=torch.bool)
+test_mask = torch.zeros(graph.num_nodes(), dtype=torch.bool)
+train_mask[train_idx] = True 
+val_mask[valid_idx] = True 
+test_mask[test_idx] = True 
+assert torch.all(train_mask | val_mask | test_mask)
+assert torch.all(~(train_mask & val_mask & test_mask))
 
-f1_micro, f1_macro = xgb_multiclass_classification(
-    feat = X,
-    label = y,
-    train_mask = train_mask,
-    eval_mask = eval_mask, 
+homo_graph = HomoGraph(
+    num_nodes = graph.num_nodes(),
+    edge_index = graph.edges(),
+    node_attr_dict = {
+        'year': graph.ndata['year'].view(-1),
+        'feat': graph.ndata['feat'],
+        'label': label.view(-1), 
+        'train_mask': train_mask,
+        'val_mask': val_mask,
+        'test_mask': test_mask,
+    },
+    num_classes = 40, 
 )
 
-print(f1_micro, f1_macro)
+homo_graph.save_to_file('/home/Dataset/GengHao/HomoGraph/DGL/ogbn-arxiv.pt')

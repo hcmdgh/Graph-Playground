@@ -34,10 +34,10 @@
         },
 
         {
-            "name": "GraphSAGE - main_pyg",
+            "name": "GraphSAGE - main",
             "type": "python",
             "request": "launch",
-            "module": "GraphSAGE.main_pyg",
+            "module": "GraphSAGE.main",
             "justMyCode": true,
         },
 

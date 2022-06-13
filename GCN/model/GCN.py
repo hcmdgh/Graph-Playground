@@ -1,7 +1,7 @@
 from util import * 
 from .GraphConv import * 
 
-__all__ = ['GCN']
+__all__ = ['GCN', 'GraphConv']
 
 
 class GCN(nn.Module):
