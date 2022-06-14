@@ -154,6 +154,14 @@
         },
 
         {
+            "name": "TCA - main",
+            "type": "python",
+            "request": "launch",
+            "module": "TCA.main",
+            "justMyCode": false,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",
