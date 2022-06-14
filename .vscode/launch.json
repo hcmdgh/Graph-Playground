@@ -162,6 +162,14 @@
         },
 
         {
+            "name": "JDA - main",
+            "type": "python",
+            "request": "launch",
+            "module": "JDA.main",
+            "justMyCode": false,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",

@@ -4,6 +4,8 @@ import sklearn.metrics
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 
+__all__ = ['TCA']
+
 
 def kernel(ker, X1, X2, gamma):
     K = None

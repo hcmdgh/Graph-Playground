@@ -30,6 +30,16 @@ def main():
                 mask_S[:len(feat_S)] = True 
                 mask_T[len(feat_S):] = True 
                 
+                
+                val_f1_micro, val_f1_macro, _, _ = KNeighbors_multiclass_classification(
+                    feat = feat_all,
+                    label = label_all,
+                    train_mask = mask_S,
+                    val_mask = mask_T,
+                )
+                
+                logging.info(f"No TCA, KNeighbors: {domain_S} -> {domain_T}: val_f1_micro = {val_f1_micro:.4f}, val_f1_macro = {val_f1_macro:.4f}")
+                
                 val_f1_micro, val_f1_macro, _, _ = xgb_multiclass_classification(
                     feat = feat_all,
                     label = label_all,
@@ -37,14 +47,23 @@ def main():
                     val_mask = mask_T,
                 )
                 
-                logging.info(f"No TCA: {domain_S} -> {domain_T}: val_f1_micro = {val_f1_micro:.4f}, val_f1_macro = {val_f1_macro:.4f}")
+                logging.info(f"No TCA, XGBoost: {domain_S} -> {domain_T}: val_f1_micro = {val_f1_micro:.4f}, val_f1_macro = {val_f1_macro:.4f}")
 
                 
-                tca = TCA(kernel_type='linear')
+                tca = JDA(kernel_type='linear')
 
-                out_S, out_T = tca.fit(feat_S=feat_S, feat_T=feat_T)
+                out_S, out_T = tca.fit(feat_S=feat_S, label_S=label_S, feat_T=feat_T)
 
                 out_all = np.concatenate([out_S, out_T], axis=0)
+                
+                val_f1_micro, val_f1_macro, _, _ = KNeighbors_multiclass_classification(
+                    feat = out_all,
+                    label = label_all,
+                    train_mask = mask_S,
+                    val_mask = mask_T,
+                )
+                
+                logging.info(f"TCA, KNeighbors: {domain_S} -> {domain_T}: val_f1_micro = {val_f1_micro:.4f}, val_f1_macro = {val_f1_macro:.4f}")
                 
                 val_f1_micro, val_f1_macro, _, _ = xgb_multiclass_classification(
                     feat = out_all,
@@ -53,7 +72,7 @@ def main():
                     val_mask = mask_T,
                 )
                 
-                logging.info(f"TCA: {domain_S} -> {domain_T}: val_f1_micro = {val_f1_micro:.4f}, val_f1_macro = {val_f1_macro:.4f}")
+                logging.info(f"TCA, XGBoost: {domain_S} -> {domain_T}: val_f1_micro = {val_f1_micro:.4f}, val_f1_macro = {val_f1_macro:.4f}")
                 
 
 if __name__ == '__main__':
