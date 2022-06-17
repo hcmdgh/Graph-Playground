@@ -80,6 +80,28 @@ class GraphSAGE(nn.Module):
         h = self.conv_list[-1](g, h)
                 
         return h 
+    
+    
+    def get_hidden_embedding(
+        self,
+        g: dgl.DGLGraph,
+        feat: Union[FloatTensor, tuple[FloatTensor, FloatTensor]],
+    ) -> FloatTensor:
+        with torch.no_grad():
+            h = feat 
+                    
+            for i in range(self.num_layers - 2):
+                conv = self.conv_list[i]
+                bn = self.bn_list[i]
+
+                h = conv(g, h)
+                h = bn(h)
+                h = torch.relu(h)
+                h = self.dropout(h)
+                
+            h = self.conv_list[-2](g, h)
+                
+            return h.detach() 
 
     
     def forward_batch(self,

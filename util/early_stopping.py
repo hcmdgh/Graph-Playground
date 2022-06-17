@@ -44,14 +44,16 @@ class EarlyStopping:
             if epoch - self.best_epoch > self.tolerance_epochs:
                 self.should_stop = True 
                 
-    def check_stop(self) -> Optional[dict]:
+    def check_stop(self, print_result: bool = True) -> dict[str, Any]:
         if self.should_stop:
-            return self.best_dict 
-        else:
-            return None 
+            if print_result:
+                print("End of training, the best result:")
+                print(self.best_dict)         
 
+            return self.best_dict
+        else:
+            return dict() 
+        
     def auto_stop(self):
-        if self.should_stop:
-            print("End of training, the best result:")
-            print(self.best_dict)
+        if self.check_stop(print_result=True):
             exit() 

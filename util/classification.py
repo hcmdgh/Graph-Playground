@@ -56,17 +56,22 @@ def xgb_multiclass_classification(
     val_mask: BoolArray,    
     test_mask: Optional[BoolArray] = None,
     verbose: bool = True, 
+    check_mask: bool = True,
 ) -> tuple[float, float, Optional[float], Optional[float]]:
     assert np.min(label) == 0 
 
     if test_mask is None:
         assert len(feat) == len(label) == len(train_mask) == len(val_mask)
-        assert np.all(train_mask | val_mask)
-        assert np.all(~(train_mask & val_mask))
+        
+        if check_mask:
+            assert np.all(train_mask | val_mask)
+            assert np.all(~(train_mask & val_mask))
     else:
         assert len(feat) == len(label) == len(train_mask) == len(val_mask) == len(test_mask)
-        assert np.all(train_mask | val_mask | test_mask)
-        assert np.all(~(train_mask & val_mask & test_mask))
+        
+        if check_mask:
+            assert np.all(train_mask | val_mask | test_mask)
+            assert np.all(~(train_mask & val_mask & test_mask))
     
     feat_dim = feat.shape[-1]
     num_classes = np.max(label) + 1 

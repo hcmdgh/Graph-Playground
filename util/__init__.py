@@ -5,7 +5,7 @@ from .graph import *
 from .early_stopping import * 
 from .model import * 
 from .dataloader import * 
-from .embedding import * 
+from .clustering import * 
 from .sample import * 
 from .reset import * 
 from .dgl_pyg import * 

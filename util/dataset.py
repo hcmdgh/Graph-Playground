@@ -1,8 +1,10 @@
 from .imports import * 
 from numpy.random import default_rng 
 
+__all__ = ['split_train_val_test_set']
 
-def random_split_dataset(
+
+def split_train_val_test_set(
     *,
     total_cnt: int,
     train_ratio: float,
