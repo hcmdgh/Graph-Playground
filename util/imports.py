@@ -50,6 +50,7 @@ import torch_geometric.data as pygdata
 import torch_geometric.nn as pygnn 
 import torch_geometric.nn.conv as pygconv 
 import torch_geometric.loader as pygloader 
+import torch_geometric.utils as pygutil
 # =========================
 
 IntTensor = FloatTensor = BoolTensor = FloatScalarTensor = Tensor

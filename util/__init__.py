@@ -11,3 +11,4 @@ from .reset import *
 from .dgl_pyg import * 
 from .classification import * 
 from .dataset import * 
+from .pyg_dataset import * 

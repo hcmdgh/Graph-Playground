@@ -337,6 +337,14 @@ class HomoGraph:
             node_attr_dict = dict(g.ndata),
             edge_attr_dict = dict(g.edata),
         )
+        
+    def add_self_loop(self):
+        g = self.to_dgl()
+        g = dgl.remove_self_loop(g)
+        g = dgl.add_self_loop(g)
+        
+        self.edge_index = tuple(g.edges())
+        self.num_edges = len(self.edge_index[0])
 
     def save_to_file(self, file_path: str):
         torch.save(self.__dict__, file_path)

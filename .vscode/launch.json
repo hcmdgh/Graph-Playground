@@ -186,6 +186,14 @@
         },
 
         {
+            "name": "GRACE - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GRACE.main",
+            "justMyCode": false,
+        },
+
+        {
             "name": "test.py",
             "type": "python",
             "request": "launch",
