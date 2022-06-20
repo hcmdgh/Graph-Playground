@@ -74,6 +74,14 @@
         },
 
         {
+            "name": "DSAN_official - main",
+            "type": "python",
+            "request": "launch",
+            "module": "DSAN_official.main",
+            "justMyCode": true,
+        },
+
+        {
             "name": "MetaPath2Vec - main",
             "type": "python",
             "request": "launch",

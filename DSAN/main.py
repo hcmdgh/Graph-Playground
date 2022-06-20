@@ -1,125 +1,137 @@
-from util import * 
-from .config import * 
 from .model import * 
-from dataset.Office31 import * 
+from util import *
 
 
-def main():
-    set_device(DEVICE)
+def main(
+    homo_graph_path_S: str,
+    homo_graph_path_T: str,
+    batch_size: int = 64,
+    lr: float = 0.001,
+    num_epochs: int = 200,
+    lmmd_weight: float = 0.5,
+):
+    init_log()
+    device = auto_set_device()
     
-    init_log('./log.log')
-    
-    src_dataloader = get_Office31_dataloader(
-        dataset_name = SRC_DATASET,
-        status = 'train', 
-        batch_size = BATCH_SIZE,
-    )
-    
-    tgt_dataloader = get_Office31_dataloader(
-        dataset_name = TGT_DATASET,
-        status = 'train', 
-        batch_size = BATCH_SIZE,
-    )
-    
-    tgt_eval_dataloader = get_Office31_dataloader(
-        dataset_name = TGT_DATASET,
-        status = 'eval', 
-        batch_size = BATCH_SIZE,
-    )
-    
-    model = DSAN(num_classes=NUM_CLASSES,
-                 bottle_neck=True)
-    model = to_device(model)
-    
-    # optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
-    optimizer = torch.optim.SGD([
-        {'params': model.resnet.parameters()},
-        {'params': model.bottle_fc.parameters(), 'lr': LR[1]},
-        {'params': model.clf_fc.parameters(), 'lr': LR[2]},
-    ], lr=LR[0], momentum=MOMENTUM, weight_decay=WEIGHT_DECAY)
-    
-    early_stopping = EarlyStopping(monitor_epochs=100)
-    
-    eval_metric = MultiClassificationMetric(status='val')
-    
-    for epoch in itertools.count(1):
-        def train_epoch():
-            model.train() 
-            
-            combined_dataloader = combine_dataloaders(src_dataloader, tgt_dataloader)
+    homo_graph_S = HomoGraph.load_from_file(homo_graph_path_S)
+    homo_graph_T = HomoGraph.load_from_file(homo_graph_path_T)
 
-            loss_list = []
-            lmmd_loss_list = [] 
-            clf_loss_list = [] 
-            
-            for step, ((src_img_batch, src_label), (tgt_img_batch, tgt_label)) in enumerate(tqdm(combined_dataloader, desc='train')):
-                src_img_batch = to_device(src_img_batch)
-                tgt_img_batch = to_device(tgt_img_batch)
-                src_label = to_device(src_label)
-                tgt_label = to_device(tgt_label)
+    feat_S = homo_graph_S.node_attr_dict['feat'].to(device)
+    feat_T = homo_graph_T.node_attr_dict['feat'].to(device)
+    feat_S_np = feat_S.cpu().numpy()
+    feat_T_np = feat_T.cpu().numpy()
+    
+    num_nodes_S = len(feat_S)
+    num_nodes_T = len(feat_T)
+    
+    # [BEGIN] 标签重新编码
+    label_S_raw = homo_graph_S.node_attr_dict['label'].numpy().astype(bool)
+    label_T_raw = homo_graph_T.node_attr_dict['label'].numpy().astype(bool)
 
-                src_pred, tgt_pred, lmmd_loss = model(
-                    src_img_batch = src_img_batch,
-                    tgt_img_batch = tgt_img_batch,
-                    src_label = src_label, 
-                )
-                
-                clf_loss = F.cross_entropy(input=src_pred, target=src_label)
-                
-                if not USE_LMMD_LOSS:
-                    lmmd_loss = 0. 
-                
-                loss = clf_loss + LMMD_LOSS_WEIGHT * lmmd_loss
-                
-                optimizer.zero_grad() 
-                loss.backward() 
-                optimizer.step() 
-            
-                loss_list.append(float(loss))
-                lmmd_loss_list.append(float(lmmd_loss))
-                clf_loss_list.append(float(clf_loss))
-
-            logging.info(f"epoch: {epoch}, loss: {np.mean(loss_list):.4f}, lmmd_loss: {np.mean(lmmd_loss_list):.4f}, clf_loss: {np.mean(clf_loss_list):.4f}") 
-
-        def eval():
-            model.eval() 
-            
-            eval_loss_list = [] 
-            
-            full_y_true = np.zeros([0], dtype=np.int64)
-            full_y_pred = np.zeros([0], dtype=np.int64)
-            
-            with torch.no_grad():
-                for tgt_img_batch, tgt_label in tqdm(tgt_eval_dataloader, desc='eval'):
-                    tgt_img_batch = to_device(tgt_img_batch)
-                    tgt_label = to_device(tgt_label)
-                    
-                    tgt_pred = model.predict(tgt_img_batch)
-
-                    loss = F.cross_entropy(input=tgt_pred, target=tgt_label)
-                    
-                    eval_loss_list.append(float(loss))
-                    
-                    y_true_np = tgt_label.cpu().numpy() 
-                    y_pred_np = tgt_pred.cpu().numpy() 
-                    y_pred_np = np.argmax(y_pred_np, axis=-1)
-                    
-                    full_y_true = np.concatenate([full_y_true, y_true_np])
-                    full_y_pred = np.concatenate([full_y_pred, y_pred_np])
-                    
-            eval_loss = np.mean(eval_loss_list)
-            logging.info(f"epoch: {epoch}, eval_loss: {eval_loss:.4f}")
-
-            eval_metric.measure(epoch=epoch, y_true=full_y_true, y_pred=full_y_pred)
-
-            early_stopping.record_loss(eval_loss)
-            
-            early_stopping.check_stop()
-            
-        train_epoch() 
+    label_map: dict[tuple, int] = dict() 
+    
+    for label in np.concatenate([label_S_raw, label_T_raw], axis=0):
+        label = tuple(label)
         
-        eval()
+        if label not in label_map:
+            label_map[label] = len(label_map)
+            
+    num_classes = len(label_map)
+    assert num_classes == 12 
+    
+    label_S_list = []
+    label_T_list = [] 
+    
+    for label in label_S_raw:
+        label = tuple(label)
+        label_S_list.append(label_map[label])
+        
+    for label in label_T_raw:
+        label = tuple(label)
+        label_T_list.append(label_map[label])
+        
+    label_S_np = np.array(label_S_list, dtype=np.int64)
+    label_T_np = np.array(label_T_list, dtype=np.int64)
+    label_S = torch.from_numpy(label_S_np).to(device)
+    label_T = torch.from_numpy(label_T_np).to(device)
+    # [END]
 
+    feat_dim = feat_S.shape[-1]
+
+    # [BEGIN] 直接用原始数据进行分类实验
+    if False:
+        combined_feat = np.concatenate([feat_S_np, feat_T_np], axis=0)
+        combined_label = np.concatenate([label_S_np, label_T_np], axis=0)
+        
+        train_mask = np.zeros(len(combined_feat), dtype=bool)
+        train_mask[:len(feat_S_np)] = True 
+        val_mask = ~train_mask 
+        
+        res_dict = xgb_multiclass_classification(
+            feat = combined_feat,
+            label = combined_label,
+            train_mask = train_mask,
+            val_mask = val_mask,
+        )
+        
+        print("直接用原始数据进行分类实验：")
+        print(res_dict)
+        print()
+    # [END]
+    
+    model = DSAN(
+        in_dim = feat_dim,
+        num_classes = num_classes,
+    )
+    
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    
+    for epoch in range(1, num_epochs + 1):
+        model.train() 
+        
+        loss_list = []
+        
+        for idxs_S, idxs_T in double_dataloader(num_nodes_S, num_nodes_T, batch_size=batch_size):
+            feat_batch_S = feat_S[idxs_S]
+            feat_batch_T = feat_T[idxs_T]
+            label_batch_S = label_S[idxs_S]
+            label_batch_T = label_T[idxs_T]
+
+            pred_S, pred_T, lmmd_loss = model(
+                feat_batch_S = feat_batch_S,
+                feat_batch_T = feat_batch_T,
+                label_batch_S = label_batch_S,
+            )
+            
+            loss = calc_loss(
+                epoch = epoch,
+                num_epochs = num_epochs,
+                label_S = label_batch_S,
+                pred_S = pred_S,
+                lmmd_loss = lmmd_loss,
+                lmmd_weight = lmmd_weight,
+            )
+            
+            optimizer.zero_grad() 
+            loss.backward() 
+            optimizer.step() 
+
+            loss_list.append(float(loss))
+            
+        if epoch % 1 == 0:
+            with torch.no_grad():
+                pred_T = model.predict(feat_T)
+
+            y_pred = np.argmax(pred_T.detach().cpu().numpy(), axis=-1) 
+                
+            val_f1_micro = calc_f1_micro(y_pred=y_pred, y_true=label_T_np)
+            val_f1_macro = calc_f1_macro(y_pred=y_pred, y_true=label_T_np)
+
+            logging.info(f"epoch: {epoch}, loss: {np.mean(loss_list):.4f}, val_f1_micro: {val_f1_micro:.4f}, val_f1_macro: {val_f1_macro:.4f}")
+            
 
 if __name__ == '__main__':
-    main() 
+    main(
+        homo_graph_path_S = '/home/Dataset/GengHao/HomoGraph/ACDNE/acmv9.pt',
+        homo_graph_path_T = '/home/Dataset/GengHao/HomoGraph/ACDNE/citationv1.pt',
+    )
