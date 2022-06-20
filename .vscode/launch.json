@@ -26,10 +26,10 @@
         },
 
         {
-            "name": "ACDNE - preprocess",
+            "name": "ACDNE_official - main",
             "type": "python",
             "request": "launch",
-            "module": "ACDNE.preprocess",
+            "module": "ACDNE_official.main",
             "justMyCode": true,
         },
 
