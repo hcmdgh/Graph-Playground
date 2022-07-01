@@ -21,7 +21,7 @@ def init_log(log_path: Optional[str] = './log.log',
     )
     
     
-def log_dict(**kwargs):
+def log_multi(**kwargs):
     seps = []
     
     for key, value in kwargs.items():
@@ -59,6 +59,9 @@ def seed_all(seed: Optional[int]):
     random.seed(seed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+    
+    dgl.seed(seed)
+    dgl.random.seed(seed)
     
     
 def auto_set_device(use_gpu: bool = True) -> torch.device:

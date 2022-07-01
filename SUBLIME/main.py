@@ -49,7 +49,7 @@ def main():
         optimizer.step() 
         optimizer.zero_grad() 
         
-        log_dict(
+        log_multi(
             epoch = epoch,
             loss = float(loss), 
         )

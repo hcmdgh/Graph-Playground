@@ -134,9 +134,7 @@
             "request": "launch",
             "module": "DGI_official.main",
             "justMyCode": true,
-            "args": [
-                "--gpu=0", "--self-loop"
-            ],
+            "args": [],
         },
         {
             "name": "GIN - main",
@@ -185,7 +183,14 @@
             "type": "python",
             "request": "launch",
             "module": "GCN.main",
-            "justMyCode": false,
+            "justMyCode": true,
+        },
+        {
+            "name": "GCN_official - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GCN_official.main",
+            "justMyCode": true,
         },
         {
             "name": "HeCo - main",
