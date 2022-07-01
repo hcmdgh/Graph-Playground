@@ -1,4 +1,3 @@
-from util import * 
 import numpy as np
 import scipy.sparse as sp
 import torch
@@ -87,48 +86,6 @@ def mask_test_edges(adj):
 
 
 def mask_test_edges_dgl(graph, adj):
-    src_index, dest_index = graph.edges() 
-    src_index = src_index.cpu().numpy()
-    dest_index = dest_index.cpu().numpy()
-    
-    num_nodes = len(adj)
-    num_edges = len(src_index)
-    
-    train_mask, val_mask, test_mask = split_train_val_test_set(num_total=num_edges, train_ratio=0.85, val_ratio=0.05)
-    num_val = np.sum(val_mask)
-    num_test = np.sum(test_mask)
-
-    all_edge_set = set(
-        (src_idx, dest_idx)
-        for src_idx, dest_idx in zip(src_index, dest_index)
-    )
-    train_val_edge_set = set(
-        (src_idx, dest_idx)
-        for src_idx, dest_idx in zip(src_index[train_mask | val_mask], dest_index[train_mask | val_mask])
-    )
-
-    val_neg_edge_index = sample_negative_edges(
-        positive_edge_set = train_val_edge_set,
-        num_nodes = num_nodes, 
-        sample_cnt = num_val, 
-    )
-    test_neg_edge_index = sample_negative_edges(
-        positive_edge_set = all_edge_set,
-        num_nodes = num_nodes, 
-        sample_cnt = num_test, 
-    )
-    
-    return (
-        np.arange(num_edges)[train_mask], 
-        np.stack([src_index, dest_index]).T[val_mask], 
-        np.stack(val_neg_edge_index).T, 
-        np.stack([src_index, dest_index]).T[test_mask], 
-        np.stack(test_neg_edge_index).T, 
-    )
-
-
-def mask_test_edges_dgl_old(graph, adj):
-    raise DeprecationWarning
     src, dst = graph.edges()
     edges_all = torch.stack([src, dst], dim=0)
     edges_all = edges_all.t().cpu().numpy()

@@ -7,7 +7,8 @@ __pycache__
 *.zip
 *.tar.*
 *.7z
-*test*
+test*
 .DS_Store
 temp
 output 
+cache

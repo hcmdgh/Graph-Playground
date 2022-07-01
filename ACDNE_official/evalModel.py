@@ -1,13 +1,13 @@
+from . import utils
+from .ACDNE_model import ACDNE
+from .flip_gradient import GradReverse
+
 import numpy as np
 import torch
 import torch.nn.functional as f
 from torch import nn
 from scipy.sparse import vstack
 from scipy.sparse import lil_matrix
-
-from . import utils
-from .ACDNE_model import ACDNE
-from .flip_gradient import GradReverse
 
 
 def train_and_evaluate(input_data, config, random_state=0):
@@ -106,6 +106,7 @@ def train_and_evaluate(input_data, config, random_state=0):
         pred_prob_xt = pred_prob_xs_xt[-num_nodes_t:, :]
         print('epoch: ', cEpoch + 1)
         f1_s = utils.f1_scores(pred_prob_xs, y_s)
+        print(f"loss: {float(total_loss):.4f}")
         print('Source micro-F1: %f, macro-F1: %f' % (f1_s[0], f1_s[1]))
         f1_t = utils.f1_scores(pred_prob_xt, y_t)
         print('Target testing micro-F1: %f, macro-F1: %f' % (f1_t[0], f1_t[1]))

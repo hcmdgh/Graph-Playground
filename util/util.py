@@ -19,7 +19,21 @@ def init_log(log_path: Optional[str] = './log.log',
         handlers = handlers,
         level = logging.INFO,
     )
-
+    
+    
+def log_dict(**kwargs):
+    seps = []
+    
+    for key, value in kwargs.items():
+        if isinstance(value, float):
+            seps.append(f"{key}: {value:.4f}") 
+        else:
+            seps.append(f"{key}: {value}")
+            
+    text = ', '.join(seps)
+    
+    logging.info(text)
+            
 
 def get_set_mapping(_set: set[Any]) -> tuple[list[Any], dict[Any, int]]:
     idx2val = list(_set)

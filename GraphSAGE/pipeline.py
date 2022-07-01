@@ -7,7 +7,7 @@ class GraphSAGE_Pipeline:
     def run_node_classification(
         cls,
         *,
-        homo_graph_path: str,
+        g: dgl.DGLGraph,
         use_gpu: bool = True,
         add_self_loop: bool = False,
         to_bidirected: bool = True,
@@ -23,31 +23,11 @@ class GraphSAGE_Pipeline:
         manually_split_train_set: bool = False,
         train_val_test_ratio: Optional[tuple[float, float, float]] = None, 
     ):
-        init_log('./log.log')
+        init_log()
         device = auto_set_device(use_gpu=use_gpu)
         
-        homo_graph = HomoGraph.load_from_file(homo_graph_path)
-        g = homo_graph.to_dgl()
-        
-        feat = homo_graph.node_attr_dict['feat'].to(device)
-        feat_dim = feat.shape[-1]
-        label = homo_graph.node_attr_dict['label'].to(device)
-        label_np = label.cpu().numpy()
-        
-        if not manually_split_train_set:
-            train_mask = homo_graph.node_attr_dict['train_mask'].numpy()
-            val_mask = homo_graph.node_attr_dict['val_mask'].numpy()
-            test_mask = homo_graph.node_attr_dict['test_mask'].numpy()
-        else:
-            train_mask, val_mask, test_mask = split_train_val_test_set(
-                total_cnt = homo_graph.num_nodes,
-                train_ratio = train_val_test_ratio[0],
-                val_ratio = train_val_test_ratio[1],
-                test_ratio = train_val_test_ratio[2],
-            )
-        
         if to_bidirected:
-            g = dgl.to_bidirected(g)
+            g = dgl.to_bidirected(g, copy_ndata=True)
         
         if add_self_loop:
             g = dgl.remove_self_loop(g)
@@ -55,10 +35,30 @@ class GraphSAGE_Pipeline:
             
         g = g.to(device)
         
+        feat = g.ndata['feat']
+        feat_dim = feat.shape[-1]
+        label = g.ndata['label']
+        label_np = label.cpu().numpy()
+        
+        num_classes = len(np.unique(label_np))
+        assert np.min(label_np) == 0 and np.max(label_np) == num_classes - 1 
+        
+        if not manually_split_train_set:
+            train_mask = g.ndata['train_mask'].cpu().numpy()
+            val_mask = g.ndata['val_mask'].cpu().numpy()
+            test_mask = g.ndata['test_mask'].cpu().numpy()
+        else:
+            train_mask, val_mask, test_mask = split_train_val_test_set(
+                total_cnt = g.num_nodes(),
+                train_ratio = train_val_test_ratio[0],
+                val_ratio = train_val_test_ratio[1],
+                test_ratio = train_val_test_ratio[2],
+            )
+        
         model = GraphSAGE(
             in_dim = feat_dim,
             hidden_dim = hidden_dim,
-            out_dim = homo_graph.num_classes,
+            out_dim = num_classes,
             num_layers = num_layers,
             dropout = dropout,
             batch_norm = batch_norm,
@@ -135,7 +135,7 @@ class GraphSAGE_Pipeline:
             nmi, ari = KMeans_clustering_evaluate(
                 feat = hidden_emb.cpu().numpy(),
                 label = label_np,
-                num_classes = homo_graph.num_classes, 
+                num_classes = num_classes, 
                 num_runs = 2,
             )
 
@@ -156,7 +156,7 @@ class GraphSAGE_Pipeline:
             
         print("\nUse XGBoost:")
         
-        val_f1_micro, val_f1_macro, test_f1_micro, test_f1_macro = xgb_multiclass_classification(
+        xgb_res = xgb_multiclass_classification(
             feat = feat.cpu().numpy(),
             label = label_np,
             train_mask = train_mask,
@@ -164,7 +164,7 @@ class GraphSAGE_Pipeline:
             test_mask = test_mask,
         )
 
-        print(f"val_f1_micro: {val_f1_micro:.4f}, val_f1_macro: {val_f1_macro:.4f}, test_f1_micro: {test_f1_micro:.4f}, test_f1_macro: {test_f1_macro:.4f}")
+        print(xgb_res)
 
     @classmethod
     def run_node_clustering(

@@ -1,7 +1,6 @@
 from torch import nn
 import torch
 import torch.nn.functional as f
-
 from .flip_gradient import GRL
 
 

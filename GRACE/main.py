@@ -1,12 +1,16 @@
 from .pipeline import * 
+from util import * 
 
 if __name__ == '__main__':
-    homo_graph = load_pyg_dataset(
-        name = 'Cora', 
-        normalize = False,
-        add_self_loop = True, 
-    )
-    
-    GRACE_Pipeline.run(
-        homo_graph = homo_graph, 
+    with open('./MAG/output/g_1.pkl', 'rb') as fp:
+        g_1 = pickle.load(fp)
+        
+    with open('./MAG/output/g_2.pkl', 'rb') as fp:
+        g_2 = pickle.load(fp)
+
+    with open('./MAG/output/g_3.pkl', 'rb') as fp:
+        g_3 = pickle.load(fp)
+
+    GRACE_Pipeline(
+        homo_graph = g_2 
     )

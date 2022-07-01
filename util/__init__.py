@@ -12,3 +12,7 @@ from .dgl_pyg import *
 from .classification import * 
 from .dataset import * 
 from .pyg_dataset import * 
+from .bert import * 
+from .sbert import * 
+from .PCA import * 
+from .dgl_dataset import * 

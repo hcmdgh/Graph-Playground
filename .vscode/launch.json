@@ -2,13 +2,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "HAN - main",
             "type": "python",
             "request": "launch",
             "module": "HAN.main",
             "justMyCode": false,
         },
-
         {
             "name": "GAT - main",
             "type": "python",
@@ -16,7 +23,6 @@
             "module": "GAT.main",
             "justMyCode": true,
         },
-
         {
             "name": "ACDNE - main",
             "type": "python",
@@ -24,7 +30,6 @@
             "module": "ACDNE.main",
             "justMyCode": true,
         },
-
         {
             "name": "ACDNE_official - main",
             "type": "python",
@@ -32,7 +37,6 @@
             "module": "ACDNE_official.main",
             "justMyCode": true,
         },
-
         {
             "name": "GraphSAGE - main",
             "type": "python",
@@ -40,7 +44,6 @@
             "module": "GraphSAGE.main",
             "justMyCode": true,
         },
-
         {
             "name": "WGAN - main",
             "type": "python",
@@ -48,7 +51,6 @@
             "module": "WGAN.main",
             "justMyCode": true,
         },
-
         {
             "name": "CGAN - main",
             "type": "python",
@@ -56,7 +58,13 @@
             "module": "CGAN.main",
             "justMyCode": true,
         },
-
+        {
+            "name": "GPT_GNN - preprocess",
+            "type": "python",
+            "request": "launch",
+            "module": "GPT_GNN.preprocess",
+            "justMyCode": true,
+        },
         {
             "name": "GraphTransferLearning - main",
             "type": "python",
@@ -64,7 +72,6 @@
             "module": "GraphTransferLearning.main",
             "justMyCode": true,
         },
-
         {
             "name": "DSAN - main",
             "type": "python",
@@ -72,7 +79,6 @@
             "module": "DSAN.main",
             "justMyCode": true,
         },
-
         {
             "name": "DSAN_official - main",
             "type": "python",
@@ -80,15 +86,13 @@
             "module": "DSAN_official.main",
             "justMyCode": true,
         },
-
         {
             "name": "MetaPath2Vec - main",
             "type": "python",
             "request": "launch",
             "module": "MetaPath2Vec.main",
-            "justMyCode": false,
+            "justMyCode": true,
         },
-
         {
             "name": "VGAE - main",
             "type": "python",
@@ -96,31 +100,51 @@
             "module": "VGAE.main",
             "justMyCode": false,
         },
-
+        {
+            "name": "MAG - main",
+            "type": "python",
+            "request": "launch",
+            "module": "MAG.main",
+            "justMyCode": true,
+        },
+        {
+            "name": "GraphCL_official - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GraphCL_official.main",
+            "justMyCode": true,
+        },
         {
             "name": "LDETM - main",
             "type": "python",
             "request": "launch",
             "module": "LDETM.main",
-            "justMyCode": false,
+            "justMyCode": true,
         },
-
         {
             "name": "DGI - main",
             "type": "python",
             "request": "launch",
             "module": "DGI.main",
-            "justMyCode": false,
+            "justMyCode": true,
         },
-
+        {
+            "name": "DGI_official - main",
+            "type": "python",
+            "request": "launch",
+            "module": "DGI_official.main",
+            "justMyCode": true,
+            "args": [
+                "--gpu=0", "--self-loop"
+            ],
+        },
         {
             "name": "GIN - main",
             "type": "python",
             "request": "launch",
             "module": "GIN.main",
-            "justMyCode": false,
+            "justMyCode": true,
         },
-
         {
             "name": "HelloWorld - main",
             "type": "python",
@@ -128,7 +152,6 @@
             "module": "HelloWorld.main",
             "justMyCode": false,
         },
-
         {
             "name": "LDETM - preprocess",
             "type": "python",
@@ -136,7 +159,6 @@
             "module": "LDETM.preprocess",
             "justMyCode": false,
         },
-
         {
             "name": "GraphVisualization - main",
             "type": "python",
@@ -144,7 +166,6 @@
             "module": "GraphVisualization.main",
             "justMyCode": false,
         },
-
         {
             "name": "HGT - main",
             "type": "python",
@@ -152,7 +173,6 @@
             "module": "HGT.main",
             "justMyCode": false,
         },
-
         {
             "name": "HGT - main_official",
             "type": "python",
@@ -160,7 +180,6 @@
             "module": "HGT.main_off",
             "justMyCode": false,
         },
-
         {
             "name": "GCN - main",
             "type": "python",
@@ -168,7 +187,6 @@
             "module": "GCN.main",
             "justMyCode": false,
         },
-
         {
             "name": "HeCo - main",
             "type": "python",
@@ -176,7 +194,6 @@
             "module": "HeCo.main",
             "justMyCode": false,
         },
-
         {
             "name": "TCA - main",
             "type": "python",
@@ -184,7 +201,6 @@
             "module": "TCA.main",
             "justMyCode": false,
         },
-
         {
             "name": "JDA - main",
             "type": "python",
@@ -192,7 +208,6 @@
             "module": "JDA.main",
             "justMyCode": false,
         },
-
         {
             "name": "GRACE - main",
             "type": "python",
@@ -200,7 +215,20 @@
             "module": "GRACE.main",
             "justMyCode": false,
         },
-
+        {
+            "name": "SUBLIME - main",
+            "type": "python",
+            "request": "launch",
+            "module": "SUBLIME.main",
+            "justMyCode": true,
+        },
+        {
+            "name": "DAN - main",
+            "type": "python",
+            "request": "launch",
+            "module": "DAN.main",
+            "justMyCode": true,
+        },
         {
             "name": "test.py",
             "type": "python",
@@ -209,7 +237,6 @@
             "console": "integratedTerminal",
             "justMyCode": true,
         },
-
         {
             "name": "test - ogbn_arxiv",
             "type": "python",
@@ -217,7 +244,6 @@
             "module": "dataset.ogbn_arxiv",
             "justMyCode": true,
         },
-
         {
             "name": "test - AdaGCN_dataset",
             "type": "python",
@@ -225,7 +251,6 @@
             "module": "dataset.AdaGCN_dataset",
             "justMyCode": true,
         },
-
         {
             "name": "test - Office31",
             "type": "python",
