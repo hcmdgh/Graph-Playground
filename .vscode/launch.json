@@ -144,6 +144,13 @@
             "justMyCode": true,
         },
         {
+            "name": "GraphMAE_official - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GraphMAE_official.main",
+            "justMyCode": true,
+        },
+        {
             "name": "HelloWorld - main",
             "type": "python",
             "request": "launch",
