@@ -24,6 +24,13 @@
             "justMyCode": true,
         },
         {
+            "name": "GAT_official - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GAT_official.main",
+            "justMyCode": true,
+        },
+        {
             "name": "ACDNE - main",
             "type": "python",
             "request": "launch",

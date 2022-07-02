@@ -29,14 +29,6 @@ def GCN_pipeline(
         graph = dgl.remove_self_loop(graph)
         graph = dgl.add_self_loop(graph)
 
-    # normalization
-    # degs = graph.in_degrees().float()
-    # norm = torch.pow(degs, -0.5)
-    # norm[torch.isinf(norm)] = 0
-    # if cuda:
-    #     norm = norm.cuda()
-    # graph.ndata['norm'] = norm.unsqueeze(1)
-
     model = GCN(
         in_dim = feat_dim,
         hidden_dim = hidden_dim,
