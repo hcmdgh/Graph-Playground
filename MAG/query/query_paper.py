@@ -1,4 +1,5 @@
 from .conn import * 
+from pprint import pprint 
 
 
 def query_paper_by_id(paper_id: int) -> dict:
@@ -29,12 +30,15 @@ def query_paper_by_field(
                 },
             },
             'size': max_cnt, 
+            'sort': [{ 'citation_count': { 'order': 'desc' } }],
         },
     )
     
-    assert resp.status_code in range(200, 300)
-    
     resp_json = resp.json() 
+    
+    if not resp.status_code in range(200, 300):
+        pprint(resp_json)
+        raise RuntimeError
 
     entries = resp_json['hits']['hits']
     

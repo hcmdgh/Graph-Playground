@@ -1,3 +1,4 @@
+from ...config import * 
 from .gin import GIN
 from .gat import GAT
 from .gcn import GCN
@@ -232,6 +233,9 @@ class PreModel(nn.Module):
     def mask_attr_prediction(self, g, x):
         pre_use_g, use_x, (mask_nodes, keep_nodes) = self.encoding_mask_noise(g, x, self._mask_rate)
 
+        if not ENABLE_2:
+            use_x = x 
+
         if self._drop_edge_rate > 0:
             use_g, masked_edges = drop_edge(pre_use_g, self._drop_edge_rate, return_edges=True)
         else:
@@ -247,7 +251,8 @@ class PreModel(nn.Module):
 
         if self._decoder_type != "mlp":
             # * remask, re-mask
-            rep[mask_nodes] = 0 #
+            if ENABLE_1:
+                rep[mask_nodes] = 0. #
 
         if self._decoder_type == "mlp":
             recon = self.decoder(rep)

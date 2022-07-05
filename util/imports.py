@@ -36,6 +36,7 @@ import matplotlib.pyplot as plt
 import networkx as nx 
 import re 
 import xgboost as xgb
+import requests
 
 # ========== DGL ==========
 import dgl

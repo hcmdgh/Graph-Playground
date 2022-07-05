@@ -151,6 +151,13 @@
             "justMyCode": true,
         },
         {
+            "name": "GraphMAE - main",
+            "type": "python",
+            "request": "launch",
+            "module": "GraphMAE.main",
+            "justMyCode": true,
+        },
+        {
             "name": "GraphMAE_official - main",
             "type": "python",
             "request": "launch",

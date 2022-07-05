@@ -12,8 +12,8 @@ class GAT(nn.Module):
         num_heads: int = 8
         num_layers: int = 2
         activation: Optional[Callable] = F.elu
-        feat_dropout: float = 0.6
-        attn_dropout: float = 0.6
+        feat_dropout: float = 0.1
+        attn_dropout: float = 0.1
         negative_slope: float = 0.2
         residual: bool = False
     
