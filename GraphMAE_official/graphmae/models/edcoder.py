@@ -1,4 +1,4 @@
-from ...config import * 
+from config import * 
 from .gin import GIN
 from .gat import GAT
 from .gcn import GCN

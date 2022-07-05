@@ -1,5 +1,5 @@
-from .pipeline import * 
-from util import * 
+from pipeline import * 
+from dl import * 
 
 if __name__ == '__main__':
     GraphMAE_pipeline(
