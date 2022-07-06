@@ -102,6 +102,9 @@ class GraphMAE_pipeline:
                 
 
 if __name__ == '__main__':
+    print(os.getcwd())
+    exit() 
+    
     pipeline = GraphMAE_pipeline(
         graph = load_dgl_dataset('cora'),
         raw_feat_classification = True, 

@@ -8,6 +8,18 @@
 		},
 		{
 			"path": "GAT_official"
+		},
+		{
+			"path": "MVGRL_official"
+		},
+		{
+			"path": "HelloWorld"
+		},
+		{
+			"path": "DBLP"
+		},
+		{
+			"path": "MVGRL"
 		}
 	],
 	"settings": {}
