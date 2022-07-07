@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "run Cora",
+            "type": "python",
+            "request": "launch",
+            "program": "train.py",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true, 
+            "args": [
+                "--device", "cuda:0",
+                "--seed", "2021",
+                "--data", "cora",
+                "--epochs", "600",
+                "--lr", "3e-4",
+                "--input_dim", "1433",
+                "--momentum", "0.8",
+                "--alpha", "0.05",
+                "--beta", "0.5",
+                "--drop_edge", "0.2",
+                "--drop_feat1", "0.5",
+                "--drop_feat2", "0.5",
+            ],
+        },
+    ]
+}

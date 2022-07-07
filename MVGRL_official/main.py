@@ -118,26 +118,27 @@ if __name__ == '__main__':
     )
     
     print(clf_res)
+    
     # Step 5:  Linear evaluation ========================================================== #
-    # for _ in range(5):
-    #     model = LogReg(args.hid_dim, n_classes)
-    #     opt = th.optim.Adam(model.parameters(), lr=args.lr2, weight_decay=args.wd2)
+    for _ in range(5):
+        model = LogReg(args.hid_dim, n_classes)
+        opt = th.optim.Adam(model.parameters(), lr=args.lr2, weight_decay=args.wd2)
 
-    #     model = model.to(args.device)
-    #     loss_fn = nn.CrossEntropyLoss()
-    #     for epoch in range(300):
-    #         model.train()
-    #         opt.zero_grad()
-    #         logits = model(train_embs)
-    #         loss = loss_fn(logits, train_labels)
-    #         loss.backward()
-    #         opt.step()
+        model = model.to(args.device)
+        loss_fn = nn.CrossEntropyLoss()
+        for epoch in range(300):
+            model.train()
+            opt.zero_grad()
+            logits = model(train_embs)
+            loss = loss_fn(logits, train_labels)
+            loss.backward()
+            opt.step()
 
-    #     model.eval()
-    #     logits = model(test_embs)
-    #     preds = th.argmax(logits, dim=1)
-    #     acc = th.sum(preds == test_labels).float() / test_labels.shape[0]
-    #     accs.append(acc * 100)
+        model.eval()
+        logits = model(test_embs)
+        preds = th.argmax(logits, dim=1)
+        acc = th.sum(preds == test_labels).float() / test_labels.shape[0]
+        accs.append(acc * 100)
 
-    # accs = th.stack(accs)
-    # print(accs.mean().item(), accs.std().item())
+    accs = th.stack(accs)
+    print(accs.mean().item(), accs.std().item())

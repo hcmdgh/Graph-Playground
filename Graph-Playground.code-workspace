@@ -20,6 +20,18 @@
 		},
 		{
 			"path": "MVGRL"
+		},
+		{
+			"path": "MERIT_official"
+		},
+		{
+			"path": "SUGRL_official"
+		},
+		{
+			"path": "GMI_official"
+		},
+		{
+			"path": "GMI"
 		}
 	],
 	"settings": {}

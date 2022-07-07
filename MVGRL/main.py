@@ -1,5 +1,6 @@
 from util import * 
 from model import * 
+from config import * 
 
 from dl import * 
 
@@ -50,6 +51,10 @@ class Pipeline:
         diff_graph = dgl.add_self_loop(diff_graph)
         diff_graph = diff_graph.to(device)
         print(diff_graph)
+        
+        if not USE_DIFF_GRAPH:
+            diff_graph = graph 
+            diff_edge_weight = None 
 
         model = MVGRL(
             in_dim = feat_dim,

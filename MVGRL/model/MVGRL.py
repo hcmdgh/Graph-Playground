@@ -1,4 +1,5 @@
 from .Discriminator import * 
+from config import * 
 
 from dl import * 
 
@@ -60,8 +61,11 @@ class MVGRL(nn.Module):
         h_g_f = self.gnn_encoder_1(graph, feat)
         h_d_f = self.gnn_encoder_2(diff_graph, feat, edge_weight=edge_weight)
         
-        perm = np.random.permutation(len(feat))
-        shuffled_feat = feat[perm]
+        if USE_NODE_FEAT_SHUFFLE:
+            perm = np.random.permutation(len(feat))
+            shuffled_feat = feat[perm]
+        else:
+            shuffled_feat = feat 
         
         h_g_s = self.gnn_encoder_1(graph, shuffled_feat)
         h_d_s = self.gnn_encoder_2(diff_graph, shuffled_feat, edge_weight=edge_weight)
