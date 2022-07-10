@@ -7,14 +7,11 @@ class Discriminator(nn.Module):
         self.f_k = nn.Bilinear(n_h1, n_h2, 1)
         self.act = nn.Sigmoid()
 
-        for m in self.modules():
-            self.weights_init(m)
-
-    def weights_init(self, m):
-        if isinstance(m, nn.Bilinear):
-            torch.nn.init.xavier_uniform_(m.weight.data)
-            if m.bias is not None:
-                m.bias.data.fill_(0.0)
+        self.reset_parameters()
+            
+    def reset_parameters(self):
+        nn.init.xavier_uniform_(self.f_k.weight)
+        nn.init.zeros_(self.f_k.bias)
 
     def forward(self, h_c, h_pl, sample_list, s_bias1=None, s_bias2=None):
         sc_1 = torch.squeeze(self.f_k(h_pl, h_c), 2)

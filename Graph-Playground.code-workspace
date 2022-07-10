@@ -32,6 +32,15 @@
 		},
 		{
 			"path": "GMI"
+		},
+		{
+			"path": "MAG"
+		},
+		{
+			"path": "SUBG-CON_official"
+		},
+		{
+			"path": "SUBG-CON"
 		}
 	],
 	"settings": {}

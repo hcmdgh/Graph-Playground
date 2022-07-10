@@ -152,6 +152,7 @@ def sp_func(arg):
     return torch.log(1+torch.exp(arg))
 
 def find_epoch(hid_units, nb_classes, train_embs, train_lbls, test_embs, test_lbls):
+    raise DeprecationWarning
     log = LogReg(hid_units, nb_classes)
     opt = torch.optim.Adam(log.parameters(), lr=0.001, weight_decay=0.00001)
     xent = nn.CrossEntropyLoss()

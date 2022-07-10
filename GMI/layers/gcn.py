@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class GCN(nn.Module):
     def __init__(self, in_ft, out_ft, act, bias=True):
         super(GCN, self).__init__()
@@ -8,19 +9,17 @@ class GCN(nn.Module):
         self.act = act 
 
         if bias:
-            self.bias = nn.Parameter(torch.FloatTensor(out_ft))
-            self.bias.data.fill_(0.0)
+            self.bias = nn.Parameter(torch.zeros(out_ft))
         else:
-            self.register_parameter('bias', None)
+            self.bias = None 
 
-        for m in self.modules():
-            self.weights_init(m)
+        self.reset_parameters()
 
-    def weights_init(self, m):
-        if isinstance(m, nn.Linear):
-            torch.nn.init.xavier_uniform_(m.weight.data)
-            if m.bias is not None:
-                m.bias.data.fill_(0.0)
+    def reset_parameters(self):
+        nn.init.xavier_uniform_(self.fc.weight)
+        
+        if self.bias is not None:
+            nn.init.zeros_(self.bias)
 
     def forward(self, seq, adj):
         seq_fts = self.fc(seq)
@@ -30,4 +29,3 @@ class GCN(nn.Module):
             out += self.bias
         
         return self.act(out), seq_fts
-
