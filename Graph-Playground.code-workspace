@@ -41,6 +41,15 @@
 		},
 		{
 			"path": "SUBG-CON"
+		},
+		{
+			"path": "M3S_official"
+		},
+		{
+			"path": "HeCo_official"
+		},
+		{
+			"path": "HeCo"
 		}
 	],
 	"settings": {}

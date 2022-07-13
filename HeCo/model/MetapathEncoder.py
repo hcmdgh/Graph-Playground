@@ -1,53 +1,36 @@
-from util import * 
-from .SemanticAttention import * 
+from graph import * 
+from .GCN import * 
+from .Attention import * 
+
+from dl import * 
 
 
 class MetapathEncoder(nn.Module):
-    def __init__(self,
-                 num_metapaths: int,
-                 emb_dim: int,
-                 attn_dropout: float = 0.5):
+    def __init__(self, 
+                 graph: HeCoGraph, 
+                 emb_dim: int, 
+                 attn_dropout: float):
         super().__init__()
-        
-        self.device = get_device()
-        
+
+        self.graph = graph 
+
         self.gcn_list = nn.ModuleList([
-            dglnn.GraphConv(
-                in_feats = emb_dim,
-                out_feats = emb_dim,
-                norm = 'right',
-                activation = nn.PReLU(),
-            ).to(self.device)
-            for _ in range(num_metapaths)
+            GCN(in_dim=emb_dim, out_dim=emb_dim) 
+            for _ in range(len(graph.metapath_list))
         ])
-        
-        self.semantic_attn = SemanticAttention(
-            emb_dim = emb_dim,
-            attn_dropout = attn_dropout,
-        )
-    
-    # [input]
-    #   metapath_subgraph_list: g[num_metapaths]
-    #   feat: float[num_nodes x emb_dim]      
-    # [output]
-    #   out: float[num_nodes x emb_dim]
-    def forward(self,
-                metapath_subgraph_list: list[dgl.DGLGraph],
-                feat: FloatTensor):
-        # metapath_subgraph_list: g[num_metapaths]
-        # feat: float[num_nodes x emb_dim]
 
-        assert len(self.gcn_list) == len(metapath_subgraph_list)
-        
-        emb_list = [
-            gcn_conv(g, feat)
-            for gcn_conv, g in zip(self.gcn_list, metapath_subgraph_list)
-        ]
+        self.semantic_attn = Attention(emb_dim=emb_dim, attn_dropout=attn_dropout)
 
-        # emb: [num_metapaths x num_nodes x emb_dim]
-        emb = torch.stack(emb_list)
+    def forward(self, 
+                feat: FloatTensor) -> FloatTensor:
+        embed_list = []
         
-        # out: [num_nodes x emb_dim]
-        out = self.semantic_attn(emb)
-        
+        for i, subgraph in enumerate(self.graph.metapath_subgraph_list):
+            emb = self.gcn_list[i](graph=subgraph, feat=feat)
+            embed_list.append(emb)
+
+        embed_list = torch.stack(embed_list)
+            
+        out = self.semantic_attn(embed_list)
+
         return out 
