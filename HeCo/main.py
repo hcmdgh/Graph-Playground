@@ -3,30 +3,6 @@ from graph import *
 from model import * 
 
 from dl import * 
-import numpy
-import torch
-from utils import load_data, set_params, evaluate
-import datetime
-import pickle as pkl
-import os
-import random
-
-args = set_params()
-if torch.cuda.is_available():
-    device = torch.device("cuda:" + str(args.gpu))
-    torch.cuda.set_device(args.gpu)
-else:
-    device = torch.device("cpu")
-
-## name of intermediate document ##
-own_str = args.dataset
-
-## random seed ##
-seed = args.seed
-numpy.random.seed(seed)
-random.seed(seed)
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
 
 
 def load_dataset(dataset_name: str) -> HeCoGraph:
@@ -66,52 +42,41 @@ def load_dataset(dataset_name: str) -> HeCoGraph:
 @dataclass 
 class Pipeline:
     dataset_name: Literal['ACM'] = 'ACM'
+    attn_dropout: float = 0.5 
+    feat_dropout: float = 0.3 
+    emb_dim: int = 64 
+    lam: float = 0.5 
+    tau: float = 0.8 
+    
+    seed: Optional[int] = None 
+    lr: float = 0.0008 
+    weight_decay: float = 0. 
     
     def run(self):
         set_cwd(__file__)
         init_log()
         device = auto_set_device()
+        seed_all(self.seed)
         
         wandb.init(project='HeCo', config=asdict(self))
         
         graph = load_dataset(self.dataset_name)
         
-        infer_ntype = graph.infer_node_type 
-        train_mask_list = [
-            graph.hg.nodes[infer_ntype].data['train_mask_20'],
-            graph.hg.nodes[infer_ntype].data['train_mask_40'],
-            graph.hg.nodes[infer_ntype].data['train_mask_60'],
-        ]
-        val_mask_list = [
-            graph.hg.nodes[infer_ntype].data['val_mask_20'],
-            graph.hg.nodes[infer_ntype].data['val_mask_40'],
-            graph.hg.nodes[infer_ntype].data['val_mask_60'],
-        ]
-        test_mask_list = [
-            graph.hg.nodes[infer_ntype].data['test_mask_20'],
-            graph.hg.nodes[infer_ntype].data['test_mask_40'],
-            graph.hg.nodes[infer_ntype].data['test_mask_60'],
-        ]
-        
-        label = graph.hg.nodes[infer_ntype].data['label']
-        num_classes = int(torch.max(label)) + 1 
-        
         model = HeCo(
             graph = graph, 
-            emb_dim = args.hidden_dim, 
-            feat_dropout = args.feat_drop, 
-            attn_dropout = args.attn_drop,
-            tau = args.tau, 
-            lam = args.lam,
+            emb_dim = self.emb_dim, 
+            feat_dropout = self.feat_dropout, 
+            attn_dropout = self.attn_dropout,
+            tau = self.tau, 
+            lam = self.lam,
         ).to(device)
         
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.l2_coef)
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         cnt_wait = 0
         best = 1e9
-        best_t = 0
 
-        for epoch in range(1, args.nb_epochs + 1):
+        for epoch in itertools.count(1):
             model.train()
 
             loss = model()
@@ -122,13 +87,12 @@ class Pipeline:
             
             if loss < best:
                 best = loss
-                best_t = epoch
                 cnt_wait = 0
                 # torch.save(model.state_dict(), 'HeCo_'+own_str+'.pkl')
             else:
                 cnt_wait += 1
 
-            if cnt_wait == args.patience:
+            if cnt_wait == 10:
                 print('Early stopping!')
                 break
             
