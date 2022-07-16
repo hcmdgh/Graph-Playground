@@ -68,6 +68,9 @@
 		},
 		{
 			"path": "DGI_official"
+		},
+		{
+			"path": "DGI"
 		}
 	],
 	"settings": {}
