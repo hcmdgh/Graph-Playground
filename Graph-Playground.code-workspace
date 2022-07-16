@@ -62,6 +62,12 @@
 		},
 		{
 			"path": "GRACE_official"
+		},
+		{
+			"path": "GCA_official"
+		},
+		{
+			"path": "DGI_official"
 		}
 	],
 	"settings": {}
