@@ -139,6 +139,8 @@ def main(
         ('paper', 'pp', 'paper'): pp_edge_index,
         ('paper', 'pa', 'author'): pa_edge_index,
         ('paper', 'pv', 'venue'): pv_edge_index,
+        ('author', 'ap', 'paper'): pa_edge_index[::-1],
+        ('venue', 'vp', 'paper'): pv_edge_index[::-1],
     })
     
     print("异构图信息：")

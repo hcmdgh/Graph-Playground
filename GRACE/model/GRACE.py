@@ -1,7 +1,8 @@
 from .loss import *
 from .MLP import * 
 from .GraphEncoder import * 
-from util import * 
+
+from dl import * 
 
 __all__ = ['GRACE']
 

@@ -1,4 +1,4 @@
-from util import *
+from dl import *
 
 
 def calc_similarity(z1: FloatTensor, z2: FloatTensor) -> FloatTensor:

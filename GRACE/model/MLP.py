@@ -1,4 +1,4 @@
-from util import * 
+from dl import * 
 
 
 class MLP(nn.Module):

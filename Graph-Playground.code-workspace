@@ -50,6 +50,18 @@
 		},
 		{
 			"path": "HeCo"
+		},
+		{
+			"path": "Experiment"
+		},
+		{
+			"path": "GraphSAGE_official"
+		},
+		{
+			"path": "GRACE"
+		},
+		{
+			"path": "GRACE_official"
 		}
 	],
 	"settings": {}
