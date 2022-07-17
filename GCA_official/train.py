@@ -81,8 +81,8 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', type=str, default='cuda:7')
-    parser.add_argument('--dataset', type=str, default='WikiCS')
-    parser.add_argument('--param', type=str, default='local:wikics.json')
+    parser.add_argument('--dataset', type=str, default='Amazon-Computers')
+    parser.add_argument('--param', type=str, default='local:amazon_computers.json')
     parser.add_argument('--seed', type=int, default=39788)
     parser.add_argument('--verbose', type=str, default='train,eval,final')
     parser.add_argument('--save_split', type=str, nargs='?')
