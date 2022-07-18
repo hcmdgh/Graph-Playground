@@ -71,6 +71,9 @@
 		},
 		{
 			"path": "DGI"
+		},
+		{
+			"path": "GCA"
 		}
 	],
 	"settings": {}
