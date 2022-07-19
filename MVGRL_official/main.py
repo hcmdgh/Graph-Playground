@@ -11,7 +11,6 @@ import os
 parser = argparse.ArgumentParser(description='mvgrl')
 
 parser.add_argument('--dataname', type=str, default='cora', help='Name of dataset.')
-parser.add_argument('--gpu', type=int, default=0, help='GPU index. Default: -1, using cpu.')
 parser.add_argument('--epochs', type=int, default=500, help='Training epochs.')
 parser.add_argument('--patience', type=int, default=20, help='Patient epochs to wait before early stopping.')
 parser.add_argument('--lr1', type=float, default=0.001, help='Learning rate of mvgrl.')
@@ -23,14 +22,11 @@ parser.add_argument("--hid_dim", type=int, default=512, help='Hidden layer dim.'
 
 args = parser.parse_args()
 
-# check cuda
-if args.gpu != -1 and th.cuda.is_available():
-    args.device = 'cuda:{}'.format(args.gpu)
-else:
-    args.device = 'cpu'
 
-if __name__ == '__main__':
+def main():
     set_cwd(__file__)
+    init_log()
+    device = auto_set_device()
     
     print(args)
 
@@ -43,14 +39,14 @@ if __name__ == '__main__':
     n_feat = feat.shape[1]
     n_classes = np.unique(label).shape[0]
 
-    graph = graph.to(args.device)
-    diff_graph = diff_graph.to(args.device)
-    feat = feat.to(args.device)
-    edge_weight = th.tensor(edge_weight).float().to(args.device)
+    graph = graph.to(device)
+    diff_graph = diff_graph.to(device)
+    feat = feat.to(device)
+    edge_weight = th.tensor(edge_weight, dtype=torch.float32, device=device)
 
-    train_mask = train_mask.to(args.device)
-    val_mask = val_mask.to(args.device)
-    test_mask = test_mask.to(args.device)
+    train_mask = train_mask.to(device)
+    val_mask = val_mask.to(device)
+    test_mask = test_mask.to(device)
 
     n_node = graph.number_of_nodes()
     lbl1 = th.ones(n_node * 2)
@@ -59,9 +55,9 @@ if __name__ == '__main__':
 
     # Step 2: Create model =================================================================== #
     model = MVGRL(n_feat, args.hid_dim)
-    model = model.to(args.device)
+    model = model.to(device)
 
-    lbl = lbl.to(args.device)
+    lbl = lbl.to(device)
 
     # Step 3: Create training components ===================================================== #
     optimizer = th.optim.Adam(model.parameters(), lr=args.lr1, weight_decay=args.wd1)
@@ -76,7 +72,7 @@ if __name__ == '__main__':
 
         shuf_idx = np.random.permutation(n_node)
         shuf_feat = feat[shuf_idx, :]
-        shuf_feat = shuf_feat.to(args.device)
+        shuf_feat = shuf_feat.to(device)
 
         out = model(graph, diff_graph, feat, shuf_feat, edge_weight)
         loss = loss_fn(out, lbl)
@@ -103,18 +99,18 @@ if __name__ == '__main__':
     train_embs = embeds[train_mask]
     test_embs = embeds[test_mask]
 
-    label = label.to(args.device)
+    label = label.to(device)
     train_labels = label[train_mask]
     test_labels = label[test_mask]
     accs = []
 
-    clf_res = sklearn_multiclass_classification(
+    clf_res = mlp_multiclass_classification(
         feat = embeds, 
         label = label,
         train_mask = train_mask,
         val_mask = val_mask,
         test_mask = test_mask,
-        max_epochs = 300, 
+        num_epochs = 300, 
     )
     
     print(clf_res)
@@ -124,7 +120,7 @@ if __name__ == '__main__':
         model = LogReg(args.hid_dim, n_classes)
         opt = th.optim.Adam(model.parameters(), lr=args.lr2, weight_decay=args.wd2)
 
-        model = model.to(args.device)
+        model = model.to(device)
         loss_fn = nn.CrossEntropyLoss()
         for epoch in range(300):
             model.train()
@@ -142,3 +138,7 @@ if __name__ == '__main__':
 
     accs = th.stack(accs)
     print(accs.mean().item(), accs.std().item())
+
+
+if __name__ == '__main__':
+    main() 

@@ -18,7 +18,8 @@ def calc_PPR_mat(graph: dgl.DGLGraph,
     
     A_ = D_ @ A @ D_ 
     
-    out = alpha * np.linalg.inv((np.eye(N) - (1 - alpha) * A_)) 
+    out = alpha * np.linalg.inv((np.eye(N) - (1 - alpha) * A_))
+    assert out.shape == (N, N) 
     
     return out 
 
@@ -26,4 +27,5 @@ def calc_PPR_mat(graph: dgl.DGLGraph,
 if __name__ == '__main__':
     graph = load_dgl_dataset('cora')
     
-    calc_PPR_mat(graph)
+    res = calc_PPR_mat(graph)
+    print(res.shape)
