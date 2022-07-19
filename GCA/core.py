@@ -100,11 +100,12 @@ class GCA_Core:
                        h2: FloatTensor) -> FloatScalarTensor:
         exp = lambda x: torch.exp(x / self.config.tau)
         
-        self_sim = exp(calc_cosine_similarity(h1, h1))
-        cross_sim = exp(calc_cosine_similarity(h1, h2))
+        intra_sim = exp(calc_cosine_similarity(h1, h1))
+        inter_sim = exp(calc_cosine_similarity(h1, h2))
 
         loss = -torch.log(
-            cross_sim.diag() / (self_sim.sum(dim=-1) + cross_sim.sum(dim=-1) - self_sim.diag())
+            inter_sim.diag() / 
+            (inter_sim.diag() + (inter_sim.sum(dim=-1) - inter_sim.diag()) + (intra_sim.sum(dim=-1) - intra_sim.diag()))
         )
 
         return loss 
