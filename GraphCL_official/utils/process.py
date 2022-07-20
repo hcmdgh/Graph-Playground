@@ -1,4 +1,3 @@
-from util import * 
 import numpy as np
 import pickle as pkl
 import networkx as nx
@@ -7,7 +6,6 @@ from scipy.sparse.linalg.eigen.arpack import eigsh
 import sys
 import torch
 import torch.nn as nn
-
 
 def parse_skipgram(fname):
     with open(fname) as f:
@@ -24,7 +22,6 @@ def parse_skipgram(fname):
             ret[cur_nd][j] = cur_ft
             it += 1
     return ret
-
 
 # Process a (subset of) a TU dataset into standard form
 def process_tu(data, nb_nodes):
@@ -48,7 +45,6 @@ def process_tu(data, nb_nodes):
 
     return features, adjacency, labels, sizes, masks
 
-
 def micro_f1(logits, labels):
     # Compute predictions
     preds = torch.round(nn.Sigmoid()(logits))
@@ -68,7 +64,6 @@ def micro_f1(logits, labels):
     rec = tp / (tp + fn)
     f1 = (2 * prec * rec) / (prec + rec)
     return f1
-
 
 """
  Prepare adjacency matrix by expanding up to a given neighbourhood.
@@ -101,13 +96,11 @@ def parse_index_file(filename):
         index.append(int(line.strip()))
     return index
 
-
 def sample_mask(idx, l):
     """Create mask."""
     mask = np.zeros(l)
     mask[idx] = 1
-    return np.array(mask, dtype=bool)
-
+    return np.array(mask, dtype=np.bool)
 
 def load_data(dataset_str): # {'pubmed', 'citeseer', 'cora'}
     """Load data."""
@@ -148,7 +141,6 @@ def load_data(dataset_str): # {'pubmed', 'citeseer', 'cora'}
 
     return adj, features, labels, idx_train, idx_val, idx_test
 
-
 def sparse_to_tuple(sparse_mx, insert_batch=False):
     """Convert sparse matrix to tuple representation."""
     """Set insert_batch=True if you want to insert a batch dimension."""
@@ -173,7 +165,6 @@ def sparse_to_tuple(sparse_mx, insert_batch=False):
 
     return sparse_mx
 
-
 def standardize_data(f, train_mask):
     """Standardize feature matrix and convert to tuple representation"""
     # standardize data
@@ -186,17 +177,14 @@ def standardize_data(f, train_mask):
     f = (f - mu) / sigma
     return f
 
-
-def preprocess_features(feat: FloatArray) -> FloatArray:
+def preprocess_features(features):
     """Row-normalize feature matrix and convert to tuple representation"""
-    rowsum = np.sum(feat, axis=-1)
+    rowsum = np.array(features.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
     r_inv[np.isinf(r_inv)] = 0.
-    r_mat_inv = np.diag(r_inv)
-    feat = r_mat_inv @ feat
-    
-    return feat
-
+    r_mat_inv = sp.diags(r_inv)
+    features = r_mat_inv.dot(features)
+    return features.todense(), sparse_to_tuple(features)
 
 def normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
@@ -212,7 +200,6 @@ def preprocess_adj(adj):
     """Preprocessing of adjacency matrix for simple GCN model and conversion to tuple representation."""
     adj_normalized = normalize_adj(adj + sp.eye(adj.shape[0]))
     return sparse_to_tuple(adj_normalized)
-
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""

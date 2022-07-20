@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class LogReg(nn.Module):
     def __init__(self, ft_in, nb_classes):
         super(LogReg, self).__init__()
@@ -20,3 +19,4 @@ class LogReg(nn.Module):
     def forward(self, seq):
         ret = self.fc(seq)
         return ret
+

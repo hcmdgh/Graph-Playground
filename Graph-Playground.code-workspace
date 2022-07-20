@@ -74,6 +74,9 @@
 		},
 		{
 			"path": "GCA"
+		},
+		{
+			"path": "GraphCL_official"
 		}
 	],
 }

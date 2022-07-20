@@ -1,8 +1,12 @@
 import torch
 import copy
 import random
+import pdb
 import scipy.sparse as sp
 import numpy as np
+
+def main():
+    pass
 
 
 def aug_random_mask(input_feature, drop_percent=0.2):
@@ -118,6 +122,9 @@ def aug_subgraph(input_fea, input_adj, drop_percent=0.2):
     return aug_input_fea, aug_input_adj
 
 
+
+
+
 def delete_row_col(input_matrix, drop_list, only_row=False):
 
     remain_list = [i for i in range(input_matrix.shape[0]) if i not in drop_list]
@@ -127,3 +134,25 @@ def delete_row_col(input_matrix, drop_list, only_row=False):
     out = out[:, remain_list]
 
     return out
+
+
+
+    
+
+
+
+    
+
+     
+
+    
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    main()
+    

@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 class Discriminator2(nn.Module):
     def __init__(self, n_h):
         super(Discriminator2, self).__init__()

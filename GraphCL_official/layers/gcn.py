@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 class GCN(nn.Module):
     def __init__(self, in_ft, out_ft, act, bias=True):
         super(GCN, self).__init__()
@@ -34,3 +33,4 @@ class GCN(nn.Module):
             out += self.bias
         
         return self.act(out)
+

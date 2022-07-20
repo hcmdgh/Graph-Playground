@@ -1,11 +1,7 @@
-from .gcn import GCN
-from .readout import AvgReadout
-from .discriminator import Discriminator
-from .discriminator2 import Discriminator2
-
 import torch
 import torch.nn as nn
-
+from layers import GCN, AvgReadout, Discriminator, Discriminator2
+import pdb
 
 class DGI(nn.Module):
     def __init__(self, n_in, n_h, activation):
