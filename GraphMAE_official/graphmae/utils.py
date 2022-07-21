@@ -41,10 +41,10 @@ def get_current_lr(optimizer):
 
 def build_args():
     parser = argparse.ArgumentParser(description="GAT")
-    parser.add_argument("--seeds", type=int, nargs="+", default=[1428])
+    parser.add_argument("--seeds", type=int, nargs="+", default=[0])
     parser.add_argument("--dataset", type=str, default="cora")
-    parser.add_argument("--device", type=int, default=7)
-    parser.add_argument("--max_epoch", type=int, default=1500,
+    parser.add_argument("--device", type=int, default=-1)
+    parser.add_argument("--max_epoch", type=int, default=200,
                         help="number of training epochs")
     parser.add_argument("--warmup_steps", type=int, default=-1)
 
@@ -54,7 +54,7 @@ def build_args():
                         help="number of output attention heads")
     parser.add_argument("--num_layers", type=int, default=2,
                         help="number of hidden layers")
-    parser.add_argument("--num_hidden", type=int, default=512,
+    parser.add_argument("--num_hidden", type=int, default=256,
                         help="number of hidden units")
     parser.add_argument("--residual", action="store_true", default=False,
                         help="use residual connection")
@@ -63,26 +63,26 @@ def build_args():
     parser.add_argument("--attn_drop", type=float, default=.1,
                         help="attention dropout")
     parser.add_argument("--norm", type=str, default=None)
-    parser.add_argument("--lr", type=float, default=0.001,
+    parser.add_argument("--lr", type=float, default=0.005,
                         help="learning rate")
-    parser.add_argument("--weight_decay", type=float, default=0,
+    parser.add_argument("--weight_decay", type=float, default=5e-4,
                         help="weight decay")
     parser.add_argument("--negative_slope", type=float, default=0.2,
                         help="the negative slope of leaky relu for GAT")
     parser.add_argument("--activation", type=str, default="prelu")
     parser.add_argument("--mask_rate", type=float, default=0.5)
     parser.add_argument("--drop_edge_rate", type=float, default=0.0)
-    parser.add_argument("--replace_rate", type=float, default=0.05)
+    parser.add_argument("--replace_rate", type=float, default=0.0)
 
     parser.add_argument("--encoder", type=str, default="gat")
     parser.add_argument("--decoder", type=str, default="gat")
-    parser.add_argument("--loss_fn", type=str, default="sce")
-    parser.add_argument("--alpha_l", type=float, default=3, help="`pow`inddex for `sce` loss")
+    parser.add_argument("--loss_fn", type=str, default="byol")
+    parser.add_argument("--alpha_l", type=float, default=2, help="`pow`inddex for `sce` loss")
     parser.add_argument("--optimizer", type=str, default="adam")
     
-    parser.add_argument("--max_epoch_f", type=int, default=300)
-    parser.add_argument("--lr_f", type=float, default=0.01, help="learning rate for evaluation")
-    parser.add_argument("--weight_decay_f", type=float, default=1e-4, help="weight decay for evaluation")
+    parser.add_argument("--max_epoch_f", type=int, default=30)
+    parser.add_argument("--lr_f", type=float, default=0.001, help="learning rate for evaluation")
+    parser.add_argument("--weight_decay_f", type=float, default=0.0, help="weight decay for evaluation")
     parser.add_argument("--linear_prob", action="store_true", default=False)
     
     parser.add_argument("--load_model", action="store_true")

@@ -1,16 +1,16 @@
-from config import * 
+from typing import Optional
+from itertools import chain
+from functools import partial
+
+import torch
+import torch.nn as nn
+
 from .gin import GIN
 from .gat import GAT
 from .gcn import GCN
 from .dot_gat import DotGAT
 from .loss_func import sce_loss
-from ..utils import create_norm, drop_edge
-
-from typing import Optional
-from itertools import chain
-from functools import partial
-import torch
-import torch.nn as nn
+from graphmae.utils import create_norm, drop_edge
 
 
 def setup_module(m_type, enc_dec, in_dim, num_hidden, out_dim, num_layers, dropout, activation, residual, norm, nhead, nhead_out, attn_drop, negative_slope=0.2, concat_out=True) -> nn.Module:
@@ -233,9 +233,6 @@ class PreModel(nn.Module):
     def mask_attr_prediction(self, g, x):
         pre_use_g, use_x, (mask_nodes, keep_nodes) = self.encoding_mask_noise(g, x, self._mask_rate)
 
-        if not ENABLE_2:
-            use_x = x 
-
         if self._drop_edge_rate > 0:
             use_g, masked_edges = drop_edge(pre_use_g, self._drop_edge_rate, return_edges=True)
         else:
@@ -251,8 +248,7 @@ class PreModel(nn.Module):
 
         if self._decoder_type != "mlp":
             # * remask, re-mask
-            if ENABLE_1:
-                rep[mask_nodes] = 0. #
+            rep[mask_nodes] = 0 #
 
         if self._decoder_type == "mlp":
             recon = self.decoder(rep)

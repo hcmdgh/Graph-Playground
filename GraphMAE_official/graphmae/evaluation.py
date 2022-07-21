@@ -1,9 +1,9 @@
-from .utils import create_optimizer, accuracy
-
 import copy
 from tqdm import tqdm
 import torch
 import torch.nn as nn
+
+from graphmae.utils import create_optimizer, accuracy
 
 
 def node_classification_evaluation(model, graph, x, num_classes, lr_f, weight_decay_f, max_epoch_f, device, linear_prob=True, mute=False):
@@ -14,6 +14,7 @@ def node_classification_evaluation(model, graph, x, num_classes, lr_f, weight_de
             in_feat = x.shape[1]
         encoder = LogisticRegression(in_feat, num_classes)
     else:
+        raise Warning
         encoder = model.encoder
         encoder.reset_classifier(num_classes)
 

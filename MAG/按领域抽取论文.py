@@ -30,7 +30,7 @@ def main():
             other_field_ids = set(field_name_2_id.values())
             other_field_ids.remove(field_id)
 
-            paper_ids = query_paper_by_field(field_id)
+            paper_ids = query_cs_paper_by_field(field_id)
 
             filtered_paper_entries = list()  
 

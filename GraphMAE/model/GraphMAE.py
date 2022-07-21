@@ -1,6 +1,6 @@
 from .GAT import * 
-from .loss import * 
-from .mask import * 
+from util import * 
+from config import * 
 
 from dl import * 
 
@@ -11,22 +11,17 @@ class GraphMAE(nn.Module):
     def __init__(self,
                  in_dim: int,
                  emb_dim: int,
-                 encoder_gat_param: GAT.Param,
-                 decoder_gat_param: GAT.Param,
-                 mask_ratio: float = 0.5,
-                 SCE_alpha: float = 3.):
+                 GAT_encoder_param: GAT.Param,
+                 GAT_decoder_param: GAT.Param):
         super().__init__()
         
-        self.mask_ratio = mask_ratio
-        self.SCE_alpha = SCE_alpha
-        
-        encoder_gat_param.in_dim = in_dim
-        encoder_gat_param.out_dim = emb_dim
-        self.encoder_gat = GAT(encoder_gat_param)
+        GAT_encoder_param.in_dim = in_dim
+        GAT_encoder_param.out_dim = emb_dim
+        self.GAT_encoder = GAT(GAT_encoder_param)
 
-        decoder_gat_param.in_dim = emb_dim 
-        decoder_gat_param.out_dim = in_dim
-        self.decoder_gat = GAT(decoder_gat_param)
+        GAT_decoder_param.in_dim = emb_dim 
+        GAT_decoder_param.out_dim = in_dim
+        self.GAT_decoder = GAT(GAT_decoder_param)
 
         self.mask_token = Parameter(torch.zeros(1, in_dim))
 
@@ -34,52 +29,52 @@ class GraphMAE(nn.Module):
 
         self.device = get_device()
         self.to(self.device)
+    
+    def mask_node_feat(self, feat: FloatTensor) -> tuple[FloatTensor, IntArray]:
+        num_nodes = len(feat)
+        perm = np.random.permutation(num_nodes)
         
-    def train_graph(self,
-                    g: dgl.DGLGraph,
-                    feat: FloatTensor) -> FloatScalarTensor:
+        num_mask_nodes = int(num_nodes * config.mask_ratio)
+        mask_nodes = perm[:num_mask_nodes]
+        
+        out_feat = feat.clone() 
+        
+        out_feat[mask_nodes] = self.mask_token 
+        
+        return out_feat, mask_nodes 
+    
+    def encode(self,
+               g: dgl.DGLGraph,
+               feat: FloatTensor) -> FloatTensor:
+        emb = self.GAT_encoder(g=g, feat=feat)
+        
+        return emb 
+    
+    def decode(self,
+               g: dgl.DGLGraph,
+               feat: FloatTensor) -> FloatTensor:
+        emb = self.GAT_decoder(g=g, feat=feat)
+        
+        return emb         
+
+    def calc_loss(self,
+                  g: dgl.DGLGraph,
+                  feat: FloatTensor) -> FloatScalarTensor:
         self.train() 
         
-        masked_feat, masked_nodes = mask_node_feat(
-            feat = feat,
-            mask_token = self.mask_token,
-            mask_ratio = self.mask_ratio, 
-        )
+        masked_feat, masked_nodes = self.mask_node_feat(feat)
         
-        emb = self.encoder_gat(g=g, feat=masked_feat)
+        emb = self.encode(g=g, feat=masked_feat)
         
         emb = self.fc(emb)
         
         emb[masked_nodes] = 0. 
         
-        recon_feat = self.decoder_gat(g=g, feat=emb)
+        recon_feat = self.decode(g=g, feat=emb)
 
         raw_feat = feat[masked_nodes]
         recon_feat = recon_feat[masked_nodes]
 
-        loss = calc_SCE_loss(raw_feat, recon_feat, alpha=self.SCE_alpha)
+        loss = calc_SCE_loss(raw_feat, recon_feat, alpha=config.SCE_alpha)
         
         return loss 
-    
-    def eval_graph(self,
-                   g: dgl.DGLGraph,
-                   feat: FloatTensor,
-                   label: IntTensor,
-                   train_mask: BoolTensor,
-                   val_mask: BoolTensor,
-                   test_mask: BoolTensor) -> dict:
-        self.eval() 
-        
-        with torch.no_grad():
-            emb = self.encoder_gat(g=g, feat=feat)
-
-        res = sklearn_multiclass_classification(
-            feat = emb,
-            label = label,
-            train_mask = train_mask,
-            val_mask = val_mask,
-            test_mask = test_mask, 
-            max_epochs = 300, 
-        )
-
-        return res 

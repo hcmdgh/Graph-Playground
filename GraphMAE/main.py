@@ -1,113 +1,104 @@
 from model import * 
+from config import * 
+from util import * 
+
 from dl import * 
 
 
-@dataclass
-class GraphMAE_pipeline:
-    graph: dgl.DGLGraph
-    seed: Optional[int] = None 
-    raw_feat_classification: bool = False
-    gat_hidden_dim: int = 64
-    gat_dropout: float = 0.1 
-    emb_dim: int = 64
-    num_epochs: int = 400 
-    lr: float = 0.001
-    weight_decay: float = 2e-4
+def main():
+    set_cwd(__file__)
+    init_log()
+    device = auto_set_device()
 
-    def run(self):
-        init_log()
-        device = auto_set_device()
-        seed_all(self.seed)
+    wandb.init(project='GraphMAE', config=asdict(config))
+    
+    graph = config.graph.to(device)
+    feat = graph.ndata.pop('feat') 
+    feat_dim = feat.shape[-1]
+    label = graph.ndata.pop('label')
+    train_mask = graph.ndata.pop('train_mask') 
+    val_mask = graph.ndata.pop('val_mask')
+    test_mask = graph.ndata.pop('test_mask')
 
-        wandb.init(
-            project = 'GraphMAE', 
-            config = asdict(self), 
+    if False:
+        print("直接对原始特征进行分类：")
+
+        clf_res = mlp_multiclass_classification(
+            feat = feat,
+            label = label,
+            train_mask = train_mask,
+            val_mask = val_mask,
+            test_mask = test_mask,     
         )
         
-        graph = self.graph.to(device)
+        print(clf_res)
+        print()
         
-        feat = graph.ndata['feat']
-        feat_dim = feat.shape[-1]
-        label = graph.ndata['label']
-        train_mask = graph.ndata['train_mask']
-        val_mask = graph.ndata['val_mask']
-        test_mask = graph.ndata['test_mask']
-
-        if self.raw_feat_classification:
-            print("直接对原始特征进行分类：")
-
-            clf_res = sklearn_multiclass_classification(
-                feat = feat,
-                label = label,
-                train_mask = train_mask,
-                val_mask = val_mask,
-                test_mask = test_mask,     
-            )
-            
-            print(clf_res)
-            print()
-            
-        model = GraphMAE(
+    model = GraphMAE(
+        in_dim = feat_dim,
+        emb_dim = config.emb_dim,
+        GAT_encoder_param = GAT.Param(
             in_dim = feat_dim,
-            emb_dim = self.emb_dim,
-            encoder_gat_param = GAT.Param(
-                in_dim = feat_dim,
-                out_dim = self.emb_dim, 
-                hidden_dim = self.gat_hidden_dim,
-                feat_dropout = self.gat_dropout,
-                attn_dropout = self.gat_dropout,
-            ),
-            decoder_gat_param = GAT.Param(
-                in_dim = self.emb_dim,
-                out_dim = feat_dim, 
-                hidden_dim = self.gat_hidden_dim,
-                feat_dropout = self.gat_dropout,
-                attn_dropout = self.gat_dropout,
-            ),
-        )
+            out_dim = config.emb_dim, 
+            hidden_dim = config.gat_hidden_dim,
+            feat_dropout = config.gat_dropout,
+            attn_dropout = config.gat_dropout,
+        ),
+        GAT_decoder_param = GAT.Param(
+            in_dim = config.emb_dim,
+            out_dim = feat_dim, 
+            hidden_dim = config.gat_hidden_dim,
+            feat_dropout = config.gat_dropout,
+            attn_dropout = config.gat_dropout,
+        ),
+    )
+    
+    optimizer = optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+    
+    
+    def train_epoch():
+        model.train() 
         
-        optimizer = optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        loss = model.calc_loss(g=graph, feat=feat)
         
-        best_val_f1_micro = 0. 
+        return loss 
+    
+    
+    def eval_epoch(mask: FloatArrayTensor) -> float:
+        model.eval() 
         
-        for epoch in tqdm(range(1, self.num_epochs + 1), disable=True):
-            loss = model.train_graph(g=graph, feat=feat)
-            
-            optimizer.zero_grad() 
-            loss.backward() 
-            optimizer.step() 
+        with torch.no_grad():
+            emb = model.encode(g=graph, feat=feat)
 
-            eval_res = model.eval_graph(
-                g = graph,
-                feat = feat,
-                label = label,
-                train_mask = train_mask,
-                val_mask = val_mask, 
-                test_mask = test_mask, 
-            )
-            
-            log_multi(
-                wandb_log = True, 
-                epoch = epoch,
-                loss = float(loss),
-                val_f1_micro = eval_res['val_f1_micro'], 
-                val_f1_macro = eval_res['val_f1_macro'], 
-                test_f1_micro = eval_res['test_f1_micro'], 
-                test_f1_macro = eval_res['test_f1_macro'],
-            )
-            
-            if eval_res['val_f1_micro'] > best_val_f1_micro:
-                best_val_f1_micro = eval_res['val_f1_micro']
-                wandb.summary['best_val_f1_micro'] = best_val_f1_micro
-                
+        eval_acc = mlp_multiclass_classification(
+            feat = emb,
+            label = label,
+            train_mask = train_mask,
+            val_mask = mask,
+        )['val_f1_micro']
+
+        return eval_acc 
+    
+    
+    recorder = ClassificationRecorder(model=model) 
+    
+    for epoch in range(1, config.num_epochs + 1):
+        loss = train_epoch()
+        
+        optimizer.zero_grad() 
+        loss.backward() 
+        optimizer.step() 
+        
+        recorder.train(epoch=epoch, loss=loss)
+
+        if epoch % 5 == 0:
+            val_acc = eval_epoch(mask=val_mask)
+            recorder.validate(epoch=epoch, val_acc=val_acc)
+
+    recorder.load_best_model_state()
+    test_acc = eval_epoch(mask=test_mask)
+    recorder.test(test_acc=test_acc)
+        
 
 if __name__ == '__main__':
-    print(os.getcwd())
-    exit() 
-    
-    pipeline = GraphMAE_pipeline(
-        graph = load_dgl_dataset('cora'),
-        raw_feat_classification = True, 
-    )
-
-    pipeline.run() 
+    main() 

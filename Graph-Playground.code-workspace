@@ -77,6 +77,12 @@
 		},
 		{
 			"path": "GraphCL_official"
-		}
+		},
+		{
+			"path": "GraphCL"
+		},
+		{
+			"path": "GCN_official"
+		},
 	],
 }

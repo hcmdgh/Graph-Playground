@@ -34,7 +34,7 @@ def GCN_pipeline(
         hidden_dim = hidden_dim,
         out_dim = num_classes,
         num_layers = num_layers,
-        activation = torch.relu,
+        act = torch.relu,
         dropout = 0.1,
     )
 

@@ -1,4 +1,4 @@
-from util import * 
+from dl import * 
 
 __all__ = ['GCN']
 
@@ -8,17 +8,17 @@ class GCN(nn.Module):
                  in_dim: int,
                  hidden_dim: int,
                  out_dim: int,
-                 num_layers: int,
-                 activation: Callable,
-                 dropout: float):
+                 num_layers: int = 2,
+                 act: Callable = nn.PReLU(),
+                 dropout: float = 0.0):
         super().__init__()
 
         assert num_layers >= 2 
         
         self.layers = nn.ModuleList([
-            dglnn.GraphConv(in_dim, hidden_dim, activation=activation),
+            dglnn.GraphConv(in_dim, hidden_dim, activation=act),
             *[
-                self.layers.append(dglnn.GraphConv(hidden_dim, hidden_dim, activation=activation))
+                self.layers.append(dglnn.GraphConv(hidden_dim, hidden_dim, activation=act))
                 for _ in range(num_layers - 2)
             ],
             dglnn.GraphConv(hidden_dim, out_dim),
