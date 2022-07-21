@@ -1,77 +1,74 @@
+from config import * 
+
 from dl import * 
 
 __all__ = ['GAT']
 
 
 class GAT(nn.Module):
-    @dataclass
-    class Param:
-        in_dim: int
-        out_dim: int
-        hidden_dim: int = 32
-        num_heads: int = 4
-        num_layers: int = 2
-        activation: Optional[Callable] = F.elu
-        feat_dropout: float = 0.2
-        attn_dropout: float = 0.1
-        negative_slope: float = 0.2
-        residual: bool = False
-    
-    def __init__(self, param: Param):
+    def __init__(self, 
+                 in_dim: int,
+                 out_dim: int,
+                 hidden_dim: int = config.GAT_hidden_dim,
+                 num_heads: int = config.GAT_num_heads,
+                 num_layers: int = config.GAT_num_layers,
+                 act: Callable = nn.PReLU(),
+                 feat_dropout: float = config.GAT_dropout,
+                 attn_dropout: float = config.GAT_dropout,
+                 negative_slope: float = config.GAT_negative_slope,
+                 residual: bool = config.GAT_residual,):
         super().__init__()
         
-        assert param.in_dim > 0 and param.out_dim > 0 
+        assert in_dim > 0 and out_dim > 0 
         
-        self.param = param 
+        self.act = act  
         
-        self.activation = param.activation 
+        self.GAT_layers = nn.ModuleList()
         
-        self.gat_layers = nn.ModuleList()
-        
-        if param.num_layers == 1:
-            self.gat_layers.append(dglnn.GATConv(
-                in_feats = param.in_dim, 
-                out_feats = param.out_dim, 
-                num_heads = param.num_heads,
-                feat_drop = param.feat_dropout,
-                attn_drop = param.attn_dropout, 
-                negative_slope = param.negative_slope,
-                residual = param.residual, 
+        if num_layers == 1:
+            self.GAT_layers.append(dglnn.GATConv(
+                in_feats = in_dim, 
+                out_feats = out_dim, 
+                num_heads = num_heads,
+                feat_drop = feat_dropout,
+                attn_drop = attn_dropout, 
+                negative_slope = negative_slope,
+                residual = residual, 
                 activation = None,
             ))
         
-        elif param.num_layers > 1:
-            self.gat_layers.append(dglnn.GATConv(
-                in_feats = param.in_dim, 
-                out_feats = param.hidden_dim, 
-                num_heads = param.num_heads,
-                feat_drop = param.feat_dropout,
-                attn_drop = param.attn_dropout, 
-                negative_slope = param.negative_slope,
+        elif num_layers > 1:
+            self.GAT_layers.append(dglnn.GATConv(
+                in_feats = in_dim, 
+                out_feats = hidden_dim, 
+                num_heads = num_heads,
+                feat_drop = feat_dropout,
+                attn_drop = attn_dropout, 
+                negative_slope = negative_slope,
                 residual = False, 
-                activation = self.activation,
+                activation = self.act,
             ))
 
-            for _ in range(param.num_layers - 2):
-                self.gat_layers.append(dglnn.GATConv(
-                    in_feats = param.hidden_dim * param.num_heads, 
-                    out_feats = param.hidden_dim, 
-                    num_heads = param.num_heads,
-                    feat_drop = param.feat_dropout,
-                    attn_drop = param.attn_dropout, 
-                    negative_slope = param.negative_slope,
-                    residual = param.residual, 
-                    activation = self.activation,
+            for _ in range(num_layers - 2):
+                self.GAT_layers.append(dglnn.GATConv(
+                    in_feats = hidden_dim * num_heads, 
+                    out_feats = hidden_dim, 
+                    num_heads = num_heads,
+                    feat_drop = feat_dropout,
+                    attn_drop = attn_dropout, 
+                    negative_slope = negative_slope,
+                    residual = residual, 
+                    activation = self.act,
                 ))
 
-            self.gat_layers.append(dglnn.GATConv(
-                in_feats = param.hidden_dim * param.num_heads, 
-                out_feats = param.out_dim, 
+            self.GAT_layers.append(dglnn.GATConv(
+                in_feats = hidden_dim * num_heads, 
+                out_feats = out_dim, 
                 num_heads = 1,
-                feat_drop = param.feat_dropout,
-                attn_drop = param.attn_dropout, 
-                negative_slope = param.negative_slope,
-                residual = param.residual, 
+                feat_drop = feat_dropout,
+                attn_drop = attn_dropout, 
+                negative_slope = negative_slope,
+                residual = residual, 
                 activation = None,
             ))
             
@@ -87,11 +84,11 @@ class GAT(nn.Module):
         # feat: [num_nodes x in_dim]
         h = feat 
         
-        for l, gat_layer in enumerate(self.gat_layers):
+        for l, gat_layer in enumerate(self.GAT_layers):
             # h: [num_nodes x num_heads x out_dim]
             h = gat_layer(g, h)
 
-            if l < len(self.gat_layers) - 1:
+            if l < len(self.GAT_layers) - 1:
                 # h: [num_nodes x (num_heads * out_dim)]
                 h = torch.flatten(h, start_dim=1)
             else:
@@ -100,34 +97,3 @@ class GAT(nn.Module):
 
         # h: [num_nodes x out_dim]
         return h
-
-    def train_graph(self,
-                    g: dgl.DGLGraph,
-                    feat: FloatTensor,
-                    mask: BoolTensor, 
-                    label: IntTensor) -> FloatScalarTensor:
-        self.train() 
-        
-        logits = self(g=g, feat=feat)
-        
-        loss = F.cross_entropy(input=logits[mask], target=label[mask])
-        
-        return loss 
-    
-    def eval_graph(self,
-                   g: dgl.DGLGraph,
-                   feat: FloatTensor,
-                   mask: BoolTensor, 
-                   label: IntTensor) -> tuple[float, float]:
-        self.eval() 
-        
-        with torch.no_grad():
-            logits = self(g=g, feat=feat)
-            
-        y_pred = logits[mask]
-        y_true = label[mask]
-        
-        f1_micro = calc_f1_micro(y_pred=y_pred, y_true=y_true)
-        f1_macro = calc_f1_macro(y_pred=y_pred, y_true=y_true)
-        
-        return f1_micro, f1_macro 

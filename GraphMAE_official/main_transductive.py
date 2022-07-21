@@ -21,9 +21,15 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=lo
 
 
 def pretrain(model, graph, feat, optimizer, max_epoch, device, scheduler, num_classes, lr_f, weight_decay_f, max_epoch_f, linear_prob, logger=None):
+    scheduler = None 
+    
     logging.info("start training..")
     graph = graph.to(device)
     x = feat.to(device)
+    label = graph.ndata.pop('label')
+    train_mask = graph.ndata.pop('train_mask')
+    val_mask = graph.ndata.pop('val_mask')
+    test_mask = graph.ndata.pop('test_mask')
 
     epoch_iter = tqdm(range(max_epoch))
 
@@ -44,7 +50,19 @@ def pretrain(model, graph, feat, optimizer, max_epoch, device, scheduler, num_cl
             logger.note(loss_dict, step=epoch)
 
         if (epoch + 1) % 200 == 0:
-            node_classification_evaluation(model, graph, x, num_classes, lr_f, weight_decay_f, max_epoch_f, device, linear_prob, mute=True)
+            # node_classification_evaluation(model, graph, x, num_classes, lr_f, weight_decay_f, max_epoch_f, device, linear_prob, mute=True)
+            with torch.no_grad():
+                emb = model.embed(graph.to(device), x.to(device))
+            
+            clf_res = mlp_multiclass_classification(
+                feat = emb,
+                label = label,
+                train_mask = train_mask,
+                val_mask = val_mask,
+                test_mask = test_mask, 
+            )
+            
+            print(clf_res)
 
     # return best_model
     return model
@@ -82,7 +100,7 @@ def main(args):
     estp_acc_list = []
     for i, seed in enumerate(seeds):
         print(f"####### Run {i} for seed {seed}")
-        set_random_seed(seed)
+        # set_random_seed(seed)
 
         if logs:
             logger = TBLogger(name=f"{dataset_name}_loss_{loss_fn}_rpr_{replace_rate}_nh_{num_hidden}_nl_{num_layers}_lr_{lr}_mp_{max_epoch}_mpf_{max_epoch_f}_wd_{weight_decay}_wdf_{weight_decay_f}_{encoder_type}_{decoder_type}")

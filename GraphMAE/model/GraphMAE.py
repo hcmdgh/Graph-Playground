@@ -10,18 +10,12 @@ __all__ = ['GraphMAE', 'GAT']
 class GraphMAE(nn.Module):
     def __init__(self,
                  in_dim: int,
-                 emb_dim: int,
-                 GAT_encoder_param: GAT.Param,
-                 GAT_decoder_param: GAT.Param):
+                 emb_dim: int):
         super().__init__()
         
-        GAT_encoder_param.in_dim = in_dim
-        GAT_encoder_param.out_dim = emb_dim
-        self.GAT_encoder = GAT(GAT_encoder_param)
+        self.GAT_encoder = GAT(in_dim=in_dim, out_dim=emb_dim)
 
-        GAT_decoder_param.in_dim = emb_dim 
-        GAT_decoder_param.out_dim = in_dim
-        self.GAT_decoder = GAT(GAT_decoder_param)
+        self.GAT_decoder = GAT(in_dim=emb_dim, out_dim=in_dim)
 
         self.mask_token = Parameter(torch.zeros(1, in_dim))
 
@@ -62,18 +56,26 @@ class GraphMAE(nn.Module):
                   feat: FloatTensor) -> FloatScalarTensor:
         self.train() 
         
-        masked_feat, masked_nodes = self.mask_node_feat(feat)
+        corrupt_feat, corrupt_nids = corrupt_node_feat(
+            g = g,
+            feat = feat,
+            mask_token = self.mask_token,
+        )
         
-        emb = self.encode(g=g, feat=masked_feat)
+        if config.drop_edge_ratio > 0.:
+            raise NotImplementedError
+        
+        emb = self.encode(g=g, feat=corrupt_feat)
         
         emb = self.fc(emb)
         
-        emb[masked_nodes] = 0. 
+        # TODO remask是否是必要的
+        emb[corrupt_nids] = 0. 
         
         recon_feat = self.decode(g=g, feat=emb)
 
-        raw_feat = feat[masked_nodes]
-        recon_feat = recon_feat[masked_nodes]
+        raw_feat = feat[corrupt_nids]
+        recon_feat = recon_feat[corrupt_nids]
 
         loss = calc_SCE_loss(raw_feat, recon_feat, alpha=config.SCE_alpha)
         

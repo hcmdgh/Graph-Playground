@@ -37,20 +37,6 @@ def main():
     model = GraphMAE(
         in_dim = feat_dim,
         emb_dim = config.emb_dim,
-        GAT_encoder_param = GAT.Param(
-            in_dim = feat_dim,
-            out_dim = config.emb_dim, 
-            hidden_dim = config.gat_hidden_dim,
-            feat_dropout = config.gat_dropout,
-            attn_dropout = config.gat_dropout,
-        ),
-        GAT_decoder_param = GAT.Param(
-            in_dim = config.emb_dim,
-            out_dim = feat_dim, 
-            hidden_dim = config.gat_hidden_dim,
-            feat_dropout = config.gat_dropout,
-            attn_dropout = config.gat_dropout,
-        ),
     )
     
     optimizer = optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
@@ -91,7 +77,7 @@ def main():
         
         recorder.train(epoch=epoch, loss=loss)
 
-        if epoch % 5 == 0:
+        if epoch % 100 == 0:
             val_acc = eval_epoch(mask=val_mask)
             recorder.validate(epoch=epoch, val_acc=val_acc)
 
