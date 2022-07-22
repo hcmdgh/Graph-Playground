@@ -26,10 +26,10 @@ def pretrain(model, graph, feat, optimizer, max_epoch, device, scheduler, num_cl
     logging.info("start training..")
     graph = graph.to(device)
     x = feat.to(device)
-    label = graph.ndata.pop('label')
-    train_mask = graph.ndata.pop('train_mask')
-    val_mask = graph.ndata.pop('val_mask')
-    test_mask = graph.ndata.pop('test_mask')
+    # label = graph.ndata.pop('label')
+    # train_mask = graph.ndata.pop('train_mask')
+    # val_mask = graph.ndata.pop('val_mask')
+    # test_mask = graph.ndata.pop('test_mask')
 
     epoch_iter = tqdm(range(max_epoch))
 
@@ -56,10 +56,10 @@ def pretrain(model, graph, feat, optimizer, max_epoch, device, scheduler, num_cl
             
             clf_res = mlp_multiclass_classification(
                 feat = emb,
-                label = label,
-                train_mask = train_mask,
-                val_mask = val_mask,
-                test_mask = test_mask, 
+                label = graph.ndata['label'],
+                train_mask = graph.ndata['train_mask'],
+                val_mask = graph.ndata['val_mask'],
+                test_mask = graph.ndata['test_mask'], 
             )
             
             print(clf_res)
@@ -135,9 +135,22 @@ def main(args):
         model = model.to(device)
         model.eval()
 
-        final_acc, estp_acc = node_classification_evaluation(model, graph, x, num_classes, lr_f, weight_decay_f, max_epoch_f, device, linear_prob)
-        acc_list.append(final_acc)
-        estp_acc_list.append(estp_acc)
+        # final_acc, estp_acc = node_classification_evaluation(model, graph, x, num_classes, lr_f, weight_decay_f, max_epoch_f, device, linear_prob)
+        # acc_list.append(final_acc)
+        # estp_acc_list.append(estp_acc)
+        
+        with torch.no_grad():
+            emb = model.embed(graph.to(device), x.to(device))
+            
+        print("final_eval:")
+        clf_res = mlp_multiclass_classification(
+            feat = emb,
+            label = graph.ndata['label'],
+            train_mask = graph.ndata['train_mask'],
+            val_mask = graph.ndata['val_mask'],
+            test_mask = graph.ndata['test_mask'], 
+        )
+        print(clf_res)
 
         if logger is not None:
             logger.finish()

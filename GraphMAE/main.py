@@ -68,14 +68,14 @@ def main():
     
     recorder = ClassificationRecorder(model=model) 
     
-    for epoch in range(1, config.num_epochs + 1):
+    for epoch in tqdm(range(1, config.num_epochs + 1), unit='epoch'):
         loss = train_epoch()
         
         optimizer.zero_grad() 
         loss.backward() 
         optimizer.step() 
         
-        recorder.train(epoch=epoch, loss=loss)
+        recorder.train(epoch=epoch, loss=loss, mute=True)
 
         if epoch % 100 == 0:
             val_acc = eval_epoch(mask=val_mask)

@@ -7,16 +7,17 @@ __all__ = ['GAT']
 
 class GAT(nn.Module):
     def __init__(self, 
+                 *,
                  in_dim: int,
                  out_dim: int,
-                 hidden_dim: int = config.GAT_hidden_dim,
-                 num_heads: int = config.GAT_num_heads,
-                 num_layers: int = config.GAT_num_layers,
+                 hidden_dim: int,
+                 num_heads: int,
+                 num_layers: int,
                  act: Callable = nn.PReLU(),
                  feat_dropout: float = config.GAT_dropout,
                  attn_dropout: float = config.GAT_dropout,
                  negative_slope: float = config.GAT_negative_slope,
-                 residual: bool = config.GAT_residual,):
+                 residual: bool = config.GAT_residual):
         super().__init__()
         
         assert in_dim > 0 and out_dim > 0 

@@ -4,9 +4,12 @@ from dl import *
 @dataclass
 class Config:
     graph: dgl.DGLGraph
-    GAT_num_layers: int = 2
-    GAT_num_heads: int = 4
-    GAT_hidden_dim: int = 128
+    GAT_encoder_num_layers: int = 2
+    GAT_encoder_num_heads: int = 4
+    GAT_encoder_hidden_dim: int = 128
+    GAT_decoder_num_layers: int = 1 
+    GAT_decoder_num_heads: int = 1
+    GAT_decoder_hidden_dim: int = 512
     GAT_dropout: float = 0.1 
     GAT_negative_slope: float = 0.2 
     GAT_residual: bool = False 

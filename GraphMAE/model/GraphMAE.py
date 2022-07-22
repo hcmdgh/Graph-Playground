@@ -13,9 +13,21 @@ class GraphMAE(nn.Module):
                  emb_dim: int):
         super().__init__()
         
-        self.GAT_encoder = GAT(in_dim=in_dim, out_dim=emb_dim)
+        self.GAT_encoder = GAT(
+            in_dim = in_dim, 
+            out_dim = emb_dim,
+            num_layers = config.GAT_encoder_num_layers,
+            num_heads = config.GAT_encoder_num_heads,
+            hidden_dim = config.GAT_encoder_hidden_dim, 
+        )
 
-        self.GAT_decoder = GAT(in_dim=emb_dim, out_dim=in_dim)
+        self.GAT_decoder = GAT(
+            in_dim = emb_dim, 
+            out_dim = in_dim,
+            num_layers = config.GAT_decoder_num_layers,
+            num_heads = config.GAT_decoder_num_heads,
+            hidden_dim = config.GAT_decoder_hidden_dim, 
+        )
 
         self.mask_token = Parameter(torch.zeros(1, in_dim))
 
