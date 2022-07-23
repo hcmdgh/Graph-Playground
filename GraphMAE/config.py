@@ -23,7 +23,10 @@ class Config:
     lr: float = 0.001
     weight_decay: float = 0.0002
     
+    loss_method: Literal['SCE', 'cos-sim'] = 'SCE'
+    
     
 config = Config(
     graph = load_dgl_dataset('cora'),
+    # loss_method = 'cos-sim', 
 )

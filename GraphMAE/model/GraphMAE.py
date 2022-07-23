@@ -36,19 +36,6 @@ class GraphMAE(nn.Module):
         self.device = get_device()
         self.to(self.device)
     
-    def mask_node_feat(self, feat: FloatTensor) -> tuple[FloatTensor, IntArray]:
-        num_nodes = len(feat)
-        perm = np.random.permutation(num_nodes)
-        
-        num_mask_nodes = int(num_nodes * config.mask_ratio)
-        mask_nodes = perm[:num_mask_nodes]
-        
-        out_feat = feat.clone() 
-        
-        out_feat[mask_nodes] = self.mask_token 
-        
-        return out_feat, mask_nodes 
-    
     def encode(self,
                g: dgl.DGLGraph,
                feat: FloatTensor) -> FloatTensor:
@@ -82,13 +69,22 @@ class GraphMAE(nn.Module):
         emb = self.fc(emb)
         
         # TODO remask是否是必要的
-        emb[corrupt_nids] = 0. 
+        # emb[corrupt_nids] = 0. 
         
         recon_feat = self.decode(g=g, feat=emb)
 
         raw_feat = feat[corrupt_nids]
         recon_feat = recon_feat[corrupt_nids]
 
-        loss = calc_SCE_loss(raw_feat, recon_feat, alpha=config.SCE_alpha)
+        if config.loss_method == 'SCE':
+            loss = calc_SCE_loss(raw_feat, recon_feat, alpha=config.SCE_alpha)
+        elif config.loss_method == 'cos-sim':
+            loss = -torch.mean(
+                torch.diag(
+                    calc_cosine_similarity(raw_feat, recon_feat)
+                )
+            )
+        else:
+            raise AssertionError
         
         return loss 
